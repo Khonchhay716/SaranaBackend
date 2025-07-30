@@ -1,4 +1,3 @@
-# pos.api
 # POS.API - Point of Sale System
 
 ## Overview
