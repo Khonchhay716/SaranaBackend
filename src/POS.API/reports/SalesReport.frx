@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Report ScriptLanguage="CSharp" ReportInfo.Created="08/05/2025 10:42:39" ReportInfo.Modified="08/08/2025 10:19:40" ReportInfo.CreatorVersion="2023.2.0.0">
+  <Dictionary>
+    <BusinessObjectDataSource Name="data" ReferenceName="data" DataType="System.Int32" Enabled="true">
+      <Column Name="Id" DataType="System.Int32"/>
+      <Column Name="OrderNumber" DataType="System.String" PropName="Number"/>
+      <Column Name="CustomerName" DataType="System.String"/>
+      <Column Name="CustomerPhone" DataType="System.String"/>
+      <Column Name="Subtotal" DataType="System.Decimal" PropName="Column5"/>
+      <Column Name="TaxAmount" DataType="System.Decimal" PropName="Column5"/>
+      <Column Name="DiscountAmount" DataType="System.Decimal" PropName="Column5"/>
+      <Column Name="TotalAmount" DataType="System.Decimal" PropName="Column5"/>
+      <Column Name="Notes" DataType="System.String"/>
+      <Column Name="CreatedAt" DataType="System.DateTime" PropName="Column3"/>
+      <Column Name="Quantity" DataType="System.Int32"/>
+      <Column Name="Barcode" DataType="System.String"/>
+      <Column Name="Name" DataType="System.String"/>
+      <Column Name="UnitPrice" DataType="System.Decimal" PropName="Column5"/>
+      <Column Name="TotalPrice" DataType="System.Decimal" PropName="Column5"/>
+    </BusinessObjectDataSource>
+  </Dictionary>
+  <ReportPage Name="Page1" Watermark.Font="Arial, 60pt">
+    <PageHeaderBand Name="PageHeader1" Width="718.2" Height="103.95">
+      <TextObject Name="Text1" Top="18.9" Width="132.3" Height="18.9" Text="Sale Report" Font="Arial, 12pt, style=Bold"/>
+      <TableObject Name="Table2" Top="75.6" Width="718.2" Height="28.35" Border.Lines="All" PrintOnParent="true">
+        <TableColumn Name="Column6" Width="158.76"/>
+        <TableColumn Name="Column7" Width="158.76"/>
+        <TableColumn Name="Column8" Width="158.76"/>
+        <TableColumn Name="Column9" Width="120.96"/>
+        <TableColumn Name="Column10" Width="120.96"/>
+        <TableRow Name="Row2" Height="28.35">
+          <TableCell Name="Cell6" Border.Lines="Right" Text="OrderNumber" HorzAlign="Center" VertAlign="Center" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell7" Border.Lines="Right" Text="CustomerName" HorzAlign="Center" VertAlign="Center" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell8" Border.Lines="Right" Text="CustomerPhone" HorzAlign="Center" VertAlign="Center" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell9" Border.Lines="All" Text="Note" HorzAlign="Center" VertAlign="Center" Font="Arial, 10pt, style=Bold"/>
+          <TableCell Name="Cell10" Text="TotalAmount" HorzAlign="Center" VertAlign="Center" Font="Arial, 10pt, style=Bold"/>
+        </TableRow>
+      </TableObject>
+    </PageHeaderBand>
+    <GroupHeaderBand Name="GroupHeader1" Top="107.15" Width="718.2" Height="37.8" Condition="[data.Id]">
+      <TableObject Name="Table3" Width="718.2" Height="28.35" Border.Lines="All" PrintOnParent="true">
+        <TableColumn Name="Column11" Width="158.76"/>
+        <TableColumn Name="Column12" Width="158.76"/>
+        <TableColumn Name="Column13" Width="158.76"/>
+        <TableColumn Name="Column14" Width="120.96"/>
+        <TableColumn Name="Column15" Width="120.96"/>
+        <TableRow Name="Row3" Height="28.35">
+          <TableCell Name="Cell11" Border.Lines="Right" Text="[data.OrderNumber]" VertAlign="Center" Font="Arial, 9pt"/>
+          <TableCell Name="Cell12" Border.Lines="Right" Text="[data.CustomerName]" VertAlign="Center" Font="Arial, 9pt"/>
+          <TableCell Name="Cell13" Border.Lines="Right" Text="[data.CustomerPhone]" VertAlign="Center" Font="Arial, 9pt"/>
+          <TableCell Name="Cell14" Border.Lines="All" Text="[data.Notes]" VertAlign="Center" Font="Arial, 9pt"/>
+          <TableCell Name="Cell15" Text="[data.TotalAmount]" VertAlign="Center" Font="Arial, 9pt"/>
+        </TableRow>
+      </TableObject>
+      <DataBand Name="Data1" Top="148.15" Width="718.2" DataSource="data" ParentIdColumn="data.Id"/>
+    </GroupHeaderBand>
+  </ReportPage>
+</Report>

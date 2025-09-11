@@ -16,7 +16,7 @@ namespace POS.Infrastructure
                     configuration.GetConnectionString("DefaultConnection"),
                     b => {
                         b.MigrationsAssembly(typeof(MyAppDbContext).Assembly.FullName);
-                        b.MigrationsHistoryTable("__EFMigrationsHistory", "coreauth");
+                        b.MigrationsHistoryTable("__EFMigrationsHistory", "pos");
                     }));
 
             // Register the DbContext interface for DI
