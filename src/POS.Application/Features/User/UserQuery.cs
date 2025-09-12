@@ -22,16 +22,22 @@ namespace POS.Application.Features.User
             _context = context;
         }
 
-        public async Task<ApiResponse<UserInfo>> Handle(UserQuery filter, CancellationToken cancellationToken)
+        public async Task<ApiResponse<UserInfo>> Handle(UserQuery DtogetbyId, CancellationToken cancellationToken)
         {
-            // var users = await _context.Users.AsNoTracking().ToListAsync(); /// how to get data all i table 
-            var user = await _context.Users.AsTracking().Where(x => x.IsDeleted == false && x.Id == filter.Id).FirstOrDefaultAsync(cancellationToken);
+            var user = await _context.Users
+            .AsTracking()
+            .Where(x => x.IsDeleted == false && x.Id == DtogetbyId.Id)
+            .ProjectToType<UserInfo>()
+            .FirstOrDefaultAsync();
+
             if (user == null)
             {
-                return ApiResponse<UserInfo>.NotFound(message: $"User with id {filter.Id} was not found !");
+                return ApiResponse<UserInfo>.NotFound(message: $"User with id {DtogetbyId.Id} was not found !");
             }
 
-            return ApiResponse<UserInfo>.Ok(user.Adapt<UserInfo>(), message: "get data user is successfully ");           
+            // var info = user.Adapt<UserInfo>();  /// code this work the same ProjectToType
+
+            return ApiResponse<UserInfo>.Ok(user, message: "get data user is successfully ");
         }
     }
 }

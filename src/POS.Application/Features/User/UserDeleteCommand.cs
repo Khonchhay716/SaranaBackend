@@ -27,7 +27,7 @@ namespace POS.Application.Features.User
             {
                 return null;
             }
-            user.IsDeleted = true; //// update it to IsDelete is true 
+            user.IsDeleted = true;
             user.DeletedDate = DateTimeOffset.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 

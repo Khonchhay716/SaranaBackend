@@ -1,4 +1,4 @@
-﻿using Insura.Application.Common;
+﻿using POS.Application.Common.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;

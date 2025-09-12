@@ -9,6 +9,7 @@ namespace POS.Application.Features.User
 {
     public record UserUpdateCommand : IRequest<ApiResponse<UserInfo>>
     {
+        /// where write column for update 
         public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
@@ -25,19 +26,20 @@ namespace POS.Application.Features.User
             _context = context;
         }
 
-        public async Task<ApiResponse<UserInfo>> Handle(UserUpdateCommand filter, CancellationToken cancellationToken)
+        public async Task<ApiResponse<UserInfo>> Handle(UserUpdateCommand DTOupdate, CancellationToken cancellationToken)
         {
-            var userupdate = await _context.Users.FindAsync(filter.Id);
-            if (userupdate == null) //// check condition if find id with user push come if the same it will not enter function this 
+            var userupdate = await _context.Users.FindAsync(DTOupdate.Id);
+            if (userupdate == null)
             {
-                return ApiResponse<UserInfo>.NotFound(message: $"User with id {filter.Id} was not found !!!");
+                return ApiResponse<UserInfo>.NotFound(message: $"User with id {DTOupdate.Id} was not found !!!");
             }
 
-            filter.Adapt(userupdate);
+            DTOupdate.Adapt(userupdate);
             userupdate.UpdatedDate = DateTimeOffset.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 
-            return ApiResponse<UserInfo>.Ok(message: $"User with id {filter.Id} was update successfully !!!");
+            var info = userupdate.Adapt<UserInfo>();
+            return ApiResponse<UserInfo>.Ok(info, message: $"User with id {DTOupdate.Id} was update successfully !!!");
 
         }
     }
