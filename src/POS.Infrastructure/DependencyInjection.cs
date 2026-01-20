@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Common.Interfaces;
-using POS.Infrastructure.Data.Configurations;
+using POS.Infrastructure.Data;
 
 namespace POS.Infrastructure
 {
@@ -20,8 +20,8 @@ namespace POS.Infrastructure
                     }));
 
             // Register the DbContext interface for DI
-            services.AddScoped<IMyAppDbContext>(provider => provider.GetRequiredService<MyAppDbContext>());
-
+            services.AddScoped<IMyAppDbContext>(provider => 
+                provider.GetRequiredService<MyAppDbContext>());
 
             return services;
         }

@@ -1,82 +1,162 @@
-using CoreAuthBackend.Client.Controllers.Extensions;
-using CoreAuthBackend.Client.Controllers.Middleware;
-using CoreAuthBackend.Client.Core.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using POS.Application;
-using POS.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using POS.Application.Common.Interfaces;
+using POS.Application.Common.Services;
+using POS.Infrastructure.Data;
+using POS.Infrastructure.Services;
+using POS.API.Authorization;
+using System.Text;
+using FluentValidation;
+using MediatR;
+using POS.Application.Features.SendMail;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add controllers first
-
+// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Add Application and Infrastructure layers
-builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration);
+// 👇 ADD THIS LINE - Register GmailService
+builder.Services.AddScoped<GmailService>();
+builder.Services.AddScoped<VerificationService>();
 
-builder.Services.AddCoreAuthFileUpload(builder.Configuration);
-builder.Services.AddCoreAuthEmail(builder.Configuration);
-// Register MyAppDbContext as the base DbContext for DI
-builder.Services.AddScoped<DbContext>(provider => provider.GetRequiredService<POS.Infrastructure.Data.Configurations.MyAppDbContext>());
-builder.Services.AddAutoCrud();
-
-// ✅ Add CoreAuth endpoints + client + middleware!
-builder.Services.AddCoreAuthWithControllers(builder.Configuration, options =>
-{
-    options.EnableSwagger = true;
-    options.EnableMiddleware = true;
-    options.RoutePrefix = "api/auth";
-    options.SwaggerTitle = "CoreAuth API";
-    options.SwaggerDocName = "coreauth";
-});
-
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowLocalhost7777",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:7777")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
-        });
-});
-
-// Configure Swagger to show ALL controllers in one document for now
+// Configure Swagger with JWT Bearer Authentication
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    c.SwaggerDoc("v1.0", new OpenApiInfo
     {
-        Title = "POS Service with CoreAuth",
-        Version = "v1",
-        Description = "POS Service API with integrated CoreAuth endpoints"
+        Title = "POS.API",
+        Version = "1.0",
+        Description = "POS API Documentation"
     });
-    
-    // Include ALL controllers in the v1 document
-    c.DocInclusionPredicate((docName, description) => docName == "v1");
+
+    // ⭐ UPDATED: Use Http scheme instead of ApiKey
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Just enter your token below (without 'Bearer' prefix).",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,  // ⭐ Changed from ApiKey to Http
+        Scheme = "bearer",  // ⭐ Lowercase "bearer"
+        BearerFormat = "JWT"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}  // ⭐ Changed to array instead of List
+        }
+    });
+});
+
+// Database Context
+builder.Services.AddDbContext<MyAppDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<IMyAppDbContext>(provider =>
+    provider.GetRequiredService<MyAppDbContext>());
+
+// HttpContext Accessor
+builder.Services.AddHttpContextAccessor();
+
+// Memory Cache
+builder.Services.AddMemoryCache();
+
+// Services
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+// MediatR
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssemblyContaining<IMyAppDbContext>();
+});
+
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<IMyAppDbContext>();
+
+// JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+            ClockSkew = TimeSpan.Zero
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                {
+                    context.Response.Headers.Add("Token-Expired", "true");
+                }
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+// ⭐ ADD AUTHORIZATION SERVICES - THIS WAS MISSING!
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
 });
 
 var app = builder.Build();
-// 1. Global Exception Handling (should be first)
-app.UseMiddleware<ExceptionMiddleware>();
 
-// Auto-migrate database on startup
-using (var scope = app.Services.CreateScope())
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
+
+// Create the folder if it doesn't exist
+if (!Directory.Exists(uploadsPath))
 {
-    var context = scope.ServiceProvider.GetRequiredService<POS.Infrastructure.Data.Configurations.MyAppDbContext>();
-    try
-    {
-        await context.Database.MigrateAsync();
-        app.Logger.LogInformation("Database migration completed successfully");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "An error occurred while migrating the database");
-        throw;
-    }
+    Directory.CreateDirectory(uploadsPath);
 }
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/Uploads"
+});
 
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
@@ -84,16 +164,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "POS Service with CoreAuth");
+        c.SwaggerEndpoint("/swagger/v1.0/swagger.json", "POS.API v1.0");
         c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
     });
 }
 
-app.UseCors("AllowLocalhost7777");
 app.UseHttpsRedirection();
 
-// CoreAuth middleware pipeline (includes authentication & authorization)
-app.UseCoreAuthControllers();
+app.UseCors("AllowAll");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

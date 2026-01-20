@@ -1,21 +1,32 @@
-
-
-using CoreAuthBackend.Client.Core.Extensions;
-using CoreAuthBackend.Client.Core.Models;
-using DocumentFormat.OpenXml.Spreadsheet;
-using Mapster;
+// POS.Application/Features/User/UserListQuery.cs
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using POS.Application.Common.Dto;
+using POS.Application.Common.Extensions;
 using POS.Application.Common.Interfaces;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace POS.Application.Features.User
 {
-    public class UserListquery : PaginationRequest, IRequest<PaginatedResult<UserInfo>>
+    public class UserListQuery : PaginationRequest, IRequest<PaginatedResult<UserInfo>>
     {
-        ///// where for write filter or  .......
+        public string? Search { get; set; }
+        public bool? IsActive { get; set; }
     }
 
-    public class UserListQueryHandler : IRequestHandler<UserListquery, PaginatedResult<UserInfo>>
+    public class UserListQueryValidator : AbstractValidator<UserListQuery>
+    {
+        public UserListQueryValidator()
+        {
+            RuleFor(x => x.Page).GreaterThan(0);
+            RuleFor(x => x.PageSize).GreaterThan(0).LessThanOrEqualTo(100);
+        }
+    }
+
+    public class UserListQueryHandler : IRequestHandler<UserListQuery, PaginatedResult<UserInfo>>
     {
         private readonly IMyAppDbContext _context;
 
@@ -24,15 +35,52 @@ namespace POS.Application.Features.User
             _context = context;
         }
 
-        public async Task<PaginatedResult<UserInfo>> Handle(UserListquery Allfiter, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<UserInfo>> Handle(UserListQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Users
-            .AsNoTracking()   //// use it for ready only 
-            .Where(x => x.IsDeleted == false)  /// use it for get data that have column is false only 
-            .OrderByDescending(x => x.Id)  //// sort data big to small 
-            .ProjectToType<UserInfo>();  //// format data first to response 
+            var query = _context.Persons
+                .AsNoTracking()
+                .Include(p => p.PersonRoles)
+                    .ThenInclude(pr => pr.Role)
+                .Where(p => !p.IsDeleted);
 
-            return await query.ToPaginatedResultAsync(Allfiter.Page, Allfiter.PageSize);
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                query = query.Where(p =>
+                    p.Username.Contains(request.Search) ||
+                    p.Email.Contains(request.Search) ||
+                    p.FirstName.Contains(request.Search) ||
+                    p.LastName.Contains(request.Search));
+            }
+
+            if (request.IsActive.HasValue)
+            {
+                query = query.Where(p => p.IsActive == request.IsActive.Value);
+            }
+
+            query = query.OrderByDescending(p => p.CreatedDate);
+
+            var projectedQuery = query.Select(p => new UserInfo
+            {
+                Id = p.Id,
+                Username = p.Username,
+                ImageProfile= p.ImageProfile,
+                Email = p.Email,
+                FirstName = p.FirstName,
+                LastName = p.LastName,
+                PhoneNumber = p.PhoneNumber,
+                IsActive = p.IsActive,
+                CreatedDate = p.CreatedDate,
+                Roles = p.PersonRoles
+                    .Where(pr => !pr.Role.IsDeleted)
+                    .Select(pr => new RoleBasicInfo
+                    {
+                        Id = pr.Role.Id,
+                        Name = pr.Role.Name,
+                        Description = pr.Role.Description
+                    }).ToList()
+            });
+
+            return await projectedQuery.ToPaginatedResultAsync(request.Page, request.PageSize);
         }
     }
 }
