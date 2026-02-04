@@ -19,4 +19,12 @@ namespace POS.Application.Features.SendMail
         public string Email { get; set; }
         public string Code { get; set; }
     }
+
+    public class ResetPasswordRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
 }
+

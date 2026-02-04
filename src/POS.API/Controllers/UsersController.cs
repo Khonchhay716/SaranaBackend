@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using POS.API.Attributes;
 using POS.API.Extensions;
@@ -19,8 +20,15 @@ namespace POS.API.Controllers
             _mediator = mediator;
         }
 
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetUsersLookup([FromQuery] UserLookupQuery query)
+        {
+            var result = await _mediator.Send(query);
+            return this.ToActionResult(result);
+        }
+
         [HttpGet]
-        [RequirePermission("user:read")]
+        [RequirePermission("user:list")]
         public async Task<ActionResult<PaginatedResult<UserInfo>>> GetUsers([FromQuery] UserListQuery query)
         {
             var result = await _mediator.Send(query);
@@ -63,7 +71,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPut("{id}/roles")]
-        [RequirePermission("user:assign-roles")]
+        // [RequirePermission("user:assign-roles")]
         public async Task<IActionResult> AssignRolesToUser(int id, [FromBody] AssignRolesToUserCommand command)
         {
             command.UserId = id;
@@ -75,6 +83,15 @@ namespace POS.API.Controllers
         public async Task<IActionResult> ChangePassword(int id, [FromBody] ChangePasswordCommand command)
         {
             command.UserId = id;
+            var result = await _mediator.Send(command);
+            return this.ToActionResult(result);
+        }
+
+
+        [HttpPut("update-password-by-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> UpdatePasswordByEmail([FromBody] UpdatePasswordCommand command)
+        {
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
         }

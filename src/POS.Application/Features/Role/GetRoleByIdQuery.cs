@@ -1,17 +1,16 @@
-// POS.Application/Features/Role/GetRoleByIdQuery.cs
-
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using POS.Application.Common.Dto;
 using POS.Application.Common.Interfaces;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace POS.Application.Features.Role
 {
-    // FIX: Make the return type nullable
-    public record GetRoleByIdQuery(int RoleId) : IRequest<RoleInfo?>;
+    public record GetRoleByIdQuery(int RoleId) : IRequest<ApiResponse<RoleInfo>>;
 
-    public class GetRoleByIdQueryHandler : IRequestHandler<GetRoleByIdQuery, RoleInfo?>
+    public class GetRoleByIdQueryHandler : IRequestHandler<GetRoleByIdQuery, ApiResponse<RoleInfo>>
     {
         private readonly IMyAppDbContext _context;
 
@@ -20,8 +19,9 @@ namespace POS.Application.Features.Role
             _context = context;
         }
 
-        public async Task<RoleInfo?> Handle(GetRoleByIdQuery request, CancellationToken cancellationToken)
+        public async Task<ApiResponse<RoleInfo>> Handle(GetRoleByIdQuery request, CancellationToken cancellationToken)
         {
+            // Project directly to RoleInfo
             var role = await _context.Roles
                 .AsNoTracking()
                 .Where(r => r.Id == request.RoleId && !r.IsDeleted)
@@ -30,12 +30,19 @@ namespace POS.Application.Features.Role
                     Id = r.Id,
                     Name = r.Name,
                     Description = r.Description,
-                    Permissions = r.RolePermissions.Select(rp => rp.PermissionName).ToList()
+                    Permissions = r.RolePermissions
+                        // .Where(rp => !rp.IsDeleted)
+                        .Select(rp => rp.PermissionName)
+                        .ToList()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
-            // Returning null is now valid with the nullable return type
-            return role;
+            if (role == null)
+            {
+                return ApiResponse<RoleInfo>.NotFound($"Role with id {request.RoleId} not found");
+            }
+
+            return ApiResponse<RoleInfo>.Ok(role);
         }
     }
 }

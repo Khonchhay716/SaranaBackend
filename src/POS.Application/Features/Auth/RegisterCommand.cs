@@ -7,6 +7,7 @@ using POS.Application.Common.Interfaces;
 using POS.Domain.Entities;
 using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using PersonEntity = POS.Domain.Entities.Person;
@@ -91,8 +92,22 @@ namespace POS.Application.Features.Auth
 
         public async Task<ApiResponse<AuthResponse>> Handle(RegisterCommand request, CancellationToken cancellationToken)
         {
+            // 1. Password Hashing
             var hashedPassword = _passwordHasher.HashPassword(request.Password);
 
+            // 2. Initial Validations (Manual checks as per your original code)
+            if (string.IsNullOrWhiteSpace(request.Username?.Trim()))
+                return ApiResponse<AuthResponse>.BadRequest("Username is required");
+
+            var isDuplicateUsername = await _context.Persons.AnyAsync(p => p.Username == request.Username, cancellationToken);
+            if (isDuplicateUsername)
+                return ApiResponse<AuthResponse>.BadRequest("Username already exists");
+
+            var isDuplicateEmail = await _context.Persons.AnyAsync(p => p.Email == request.Email && !p.IsDeleted, cancellationToken);
+            if (isDuplicateEmail)
+                return ApiResponse<AuthResponse>.BadRequest("Email already exists");
+
+            // 3. Create the Person Entity
             var person = new PersonEntity
             {
                 Username = request.Username,
@@ -105,12 +120,31 @@ namespace POS.Application.Features.Auth
                 CreatedDate = DateTime.UtcNow
             };
 
+            // 4. AUTO-ASSIGN "User" ROLE
+            // This looks for the role named "User" in your Database
+            var defaultRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == "User" && !r.IsDeleted, cancellationToken);
+
+            if (defaultRole != null)
+            {
+                person.PersonRoles.Add(new PersonRole
+                {
+                    Person = person,
+                    RoleId = defaultRole.Id
+                });
+            }
+
+            // 5. Save to Database
             _context.Persons.Add(person);
             await _context.SaveChangesAsync(cancellationToken);
 
-            var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, Enumerable.Empty<string>());
+            // 6. Generate Tokens
+            // We pass "User" in the roles list so the JWT contains the correct permissions
+            var userRoles = new List<string> { "User" };
+            var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, userRoles);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
+            // 7. Save Refresh Token
             var userRefreshToken = new RefreshToken
             {
                 Token = refreshToken,
@@ -122,6 +156,7 @@ namespace POS.Application.Features.Auth
             _context.RefreshTokens.Add(userRefreshToken);
             await _context.SaveChangesAsync(cancellationToken);
 
+            // 8. Final Response
             var response = new AuthResponse
             {
                 AccessToken = accessToken,

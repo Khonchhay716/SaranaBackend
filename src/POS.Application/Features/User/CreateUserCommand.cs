@@ -6,6 +6,9 @@ using POS.Application.Common.Dto;
 using POS.Application.Common.Interfaces;
 using POS.Domain.Entities;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using PersonEntity = POS.Domain.Entities.Person;
@@ -22,6 +25,7 @@ namespace POS.Application.Features.User
         public string LastName { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }
         public bool IsActive { get; set; } = true;
+        public List<int> RoleIds { get; set; } = new();
     }
 
     public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
@@ -54,6 +58,12 @@ namespace POS.Application.Features.User
             RuleFor(x => x.LastName)
                 .NotEmpty().WithMessage("Last name is required")
                 .MaximumLength(100).WithMessage("Last name must not exceed 100 characters");
+
+            RuleFor(x => x.RoleIds)
+                .NotNull().WithMessage("Role IDs list is required");
+
+            RuleForEach(x => x.RoleIds)
+                .MustAsync(RoleExists).WithMessage("One or more roles not found");
         }
 
         private async Task<bool> BeUniqueUsername(string username, CancellationToken cancellationToken)
@@ -64,6 +74,11 @@ namespace POS.Application.Features.User
         private async Task<bool> BeUniqueEmail(string email, CancellationToken cancellationToken)
         {
             return !await _context.Persons.AnyAsync(p => p.Email == email, cancellationToken);
+        }
+
+        private async Task<bool> RoleExists(int roleId, CancellationToken cancellationToken)
+        {
+            return await _context.Roles.AnyAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken);
         }
     }
 
@@ -80,6 +95,71 @@ namespace POS.Application.Features.User
 
         public async Task<ApiResponse<UserInfo>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
+            if (string.IsNullOrWhiteSpace(request.Username.Trim()))
+            {
+                return ApiResponse<UserInfo>.BadRequest("Username is required");
+            }
+            if (request.Username.Length < 3)
+            {
+                return ApiResponse<UserInfo>.BadRequest("Username must enter at least 3 character");
+            }
+            var isDuplicateUsername = await _context.Persons.AnyAsync(p => p.Username == request.Username);
+            if (isDuplicateUsername)
+            {
+                return ApiResponse<UserInfo>.BadRequest("Username already exists");
+            }
+            var isDuplicateEmail = await _context.Persons.AnyAsync(p => p.Email == request.Email && p.IsDeleted == false);
+            if (isDuplicateEmail)
+            {
+                return ApiResponse<UserInfo>.BadRequest("Email already exists");
+            }
+            var password = request.Password?.Trim() ?? "";
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                return ApiResponse<UserInfo>.BadRequest("Password is required");
+            }
+
+            if (password.Length < 8)
+            {
+                return ApiResponse<UserInfo>.BadRequest("Password must be at least 8 characters");
+            }
+
+            if (!Regex.IsMatch(password, "[A-Z]"))
+            {
+                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one uppercase letter");
+            }
+
+            if (!Regex.IsMatch(password, "[a-z]"))
+            {
+                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one lowercase letter");
+            }
+
+            if (!Regex.IsMatch(password, @"\d"))
+            {
+                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one number");
+            }
+
+            if (!Regex.IsMatch(password, @"[!@#$%^&*]"))
+            {
+                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one special character (!@#$%^&*)");
+            }
+
+            // Validate roles exist
+            if (request.RoleIds.Any())
+            {
+                var validRoleIds = await _context.Roles
+                    .Where(r => request.RoleIds.Contains(r.Id) && !r.IsDeleted)
+                    .Select(r => r.Id)
+                    .ToListAsync(cancellationToken);
+
+                var invalidRoleIds = request.RoleIds.Except(validRoleIds).ToList();
+                if (invalidRoleIds.Any())
+                {
+                    return ApiResponse<UserInfo>.BadRequest($"Invalid role IDs: {string.Join(", ", invalidRoleIds)}");
+                }
+            }
+
             var hashedPassword = _passwordHasher.HashPassword(request.Password);
 
             var person = new PersonEntity
@@ -98,6 +178,30 @@ namespace POS.Application.Features.User
             _context.Persons.Add(person);
             await _context.SaveChangesAsync(cancellationToken);
 
+            // Assign roles
+            if (request.RoleIds.Any())
+            {
+                var personRoles = request.RoleIds.Select(roleId => new PersonRole
+                {
+                    PersonId = person.Id,
+                    RoleId = roleId
+                }).ToList();
+
+                _context.PersonRoles.AddRange(personRoles);
+                await _context.SaveChangesAsync(cancellationToken);
+            }
+
+            // Load roles for response
+            var roles = await _context.Roles
+                .Where(r => request.RoleIds.Contains(r.Id) && !r.IsDeleted)
+                .Select(r => new RoleBasicInfo
+                {
+                    Id = r.Id,
+                    Name = r.Name,
+                    Description = r.Description
+                })
+                .ToListAsync(cancellationToken);
+
             var userInfo = new UserInfo
             {
                 Id = person.Id,
@@ -107,7 +211,8 @@ namespace POS.Application.Features.User
                 FirstName = person.FirstName,
                 LastName = person.LastName,
                 PhoneNumber = person.PhoneNumber,
-                IsActive = person.IsActive
+                IsActive = person.IsActive,
+                Roles = roles
             };
 
             return ApiResponse<UserInfo>.Created(userInfo, "User created successfully");

@@ -21,7 +21,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet]
-        [RequirePermission("role:read")]
+        [RequirePermission("role:list")]
         public async Task<ActionResult<PaginatedResult<RoleInfo>>> GetRoles([FromQuery] RoleListQuery query)
         {
             var result = await _mediator.Send(query);
@@ -48,7 +48,7 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
         }
-        
+
         [HttpPut("{id}")]
         [RequirePermission("role:update")]
         public async Task<IActionResult> UpdateRole(int id, [FromBody] RoleUpdateCommand command)
@@ -78,6 +78,15 @@ namespace POS.API.Controllers
                 return NotFound($"Role with ID {id} not found");
 
             return Ok(result);
+        }
+        
+        [HttpDelete("{id}")]
+        [RequirePermission("role:delete")]
+        public async Task<IActionResult> DeleteRole(int id)
+        {
+            var command = new RoleDeleteCommand { Id = id };
+            var result = await _mediator.Send(command);
+            return this.ToActionResult(result);
         }
     }
 }

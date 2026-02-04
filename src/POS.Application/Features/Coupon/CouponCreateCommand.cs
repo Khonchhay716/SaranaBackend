@@ -29,14 +29,6 @@ namespace POS.Application.Features.Coupon
         public string Description { get; set; } = string.Empty;
         public Status Status { get; set; }
     }
-
-    public class CouponCreateCommandValidator : AbstractValidator<CouponCreateCommand>
-    {
-        public CouponCreateCommandValidator()
-        {
-        }
-    }
-
     public class CouponCreateCommandHandler : IRequestHandler<CouponCreateCommand, ApiResponse<CouponInfo>>
     {
         private readonly IMyAppDbContext _context;
@@ -48,19 +40,9 @@ namespace POS.Application.Features.Coupon
 
         public async Task<ApiResponse<CouponInfo>> Handle(CouponCreateCommand request, CancellationToken cancellationToken)
         {
-            var validator = new CouponCreateCommandValidator();
-            var validationResult = validator.Validate(request);
-
-            if (!validationResult.IsValid)
-            {
-                var errorMessages = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return ApiResponse<CouponInfo>.BadRequest(errorMessages);
-            }
-
             var coupon = request.Adapt<DomainPerson>();
             coupon.CreatedDate = DateTimeOffset.UtcNow;
             coupon.UpdatedDate = DateTimeOffset.UtcNow;
-
             _context.Coupons.Add(coupon);
             await _context.SaveChangesAsync(cancellationToken);
 

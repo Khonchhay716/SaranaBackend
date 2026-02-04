@@ -63,5 +63,7 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(query);
             return this.ToActionResult(result);
         }
+
+        
     }
 }
