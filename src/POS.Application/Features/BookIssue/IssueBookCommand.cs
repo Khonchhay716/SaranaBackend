@@ -76,6 +76,7 @@ namespace POS.Application.Features.BookIssue
             var currentIssuesCount = await _context.BookIssues
                 .CountAsync(bi => bi.LibraryMemberId == request.LibraryMemberId 
                     && bi.Status == "Issued" 
+                    || bi.Status == "Renewed" 
                     && !bi.IsDeleted, cancellationToken);
 
             if (currentIssuesCount >= member.MaxBooksAllowed)
