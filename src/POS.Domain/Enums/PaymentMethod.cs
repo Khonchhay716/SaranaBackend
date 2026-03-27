@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace POS.Domain.Enum
+namespace POS.Domain.Enums
 {
-    public enum PaymentMethod
+    public enum PaymentMethodCode
     {
         Cash = 1,
-        Card,
-        Digital,
+        Card = 2,
+        Points = 3,
+        Scan = 4,
     }
 }

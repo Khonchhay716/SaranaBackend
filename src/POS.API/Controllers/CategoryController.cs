@@ -1,11 +1,10 @@
-// POS.API/Controllers/CategoryController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using POS.API.Attributes;
 using POS.API.Extensions;
 using POS.Application.Common.Dto;
 using POS.Application.Features.Category;
-
+ 
 namespace POS.API.Controllers
 {
     [ApiController]
@@ -13,19 +12,19 @@ namespace POS.API.Controllers
     public class CategoryController : ControllerBase
     {
         private readonly IMediator _mediator;
-
+ 
         public CategoryController(IMediator mediator)
         {
             _mediator = mediator;
         }
-
+ 
         [HttpGet("lookup")]
-        public async Task<IActionResult> GetCategoryLookup([FromQuery] CategoryLookupQuery query)
+        public async Task<ActionResult<PaginatedResult<CategoryInfoLookup>>> GetCategoriesLookup([FromQuery] CategoryLookupListQuery query)
         {
             var result = await _mediator.Send(query);
-            return this.ToActionResult(result);
+            return Ok(result);
         }
-
+ 
         [HttpGet]
         [RequirePermission("category:read")]
         public async Task<ActionResult<PaginatedResult<CategoryInfo>>> GetCategories([FromQuery] CategoryListQuery query)
@@ -33,7 +32,15 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(query);
             return Ok(result);
         }
-
+ 
+        [HttpGet("{id}")]
+        [RequirePermission("category:view")]
+        public async Task<IActionResult> GetCategory(int id)
+        {
+            var result = await _mediator.Send(new GetCategoryQuery { Id = id });
+            return this.ToActionResult(result);
+        }
+ 
         [HttpPost]
         [RequirePermission("category:create")]
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryCommand command)
@@ -41,16 +48,7 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
         }
-
-        [HttpGet("{id}")]
-        [RequirePermission("category:read")]
-        public async Task<IActionResult> GetCategory(int id)
-        {
-            var query = new GetCategoryQuery { Id = id };
-            var result = await _mediator.Send(query);
-            return this.ToActionResult(result);
-        }
-
+ 
         [HttpPut("{id}")]
         [RequirePermission("category:update")]
         public async Task<IActionResult> UpdateCategory(int id, [FromBody] UpdateCategoryCommand command)
@@ -59,13 +57,12 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
         }
-
+ 
         [HttpDelete("{id}")]
         [RequirePermission("category:delete")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var command = new DeleteCategoryCommand { Id = id };
-            var result = await _mediator.Send(command);
+            var result = await _mediator.Send(new DeleteCategoryCommand { Id = id });
             return this.ToActionResult(result);
         }
     }

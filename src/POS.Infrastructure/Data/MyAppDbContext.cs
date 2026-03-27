@@ -15,18 +15,21 @@ namespace POS.Infrastructure.Data
         }
 
         // ----------------- DbSets -----------------
-        public DbSet<Product> Products { get; set; } = null!;
         public DbSet<Person> Persons { get; set; } = null!;
-        public DbSet<Coupon> Coupons { get; set; } = null!;
         public DbSet<Role> Roles { get; set; } = null!;
-        public DbSet<Book> Books { get; set; } = null!;
-        public DbSet<BookIssue> BookIssues { get; set; } = null!;
-        public DbSet<LibraryMember> LibraryMembers { get; set; } = null!;
-        public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Permission> Permissions { get; set; } = null!;
         public DbSet<PersonRole> PersonRoles { get; set; } = null!;
         public DbSet<RolePermission> RolePermissions { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
+
+        public DbSet<Category> Categories { get; set; } = null!;
+        public DbSet<Branch> Branches { get; set; } = null!;
+        public DbSet<Product> Products { get; set; } = null!;
+        public DbSet<SerialNumber> SerialNumbers { get; set; } = null!;
+        public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+        public DbSet<Order> Orders { get; set; } = null!;
+        public DbSet<Discount> Discounts => Set<Discount>();
+        public DbSet<ProductDiscount> ProductDiscounts => Set<ProductDiscount>();
 
         // ----------------- Configuration -----------------
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -55,6 +58,7 @@ namespace POS.Infrastructure.Data
         {
             var utcNow = DateTimeOffset.UtcNow;
 
+            // Handle entities that implement IHasTimestamps (if you still have any)
             foreach (var entry in ChangeTracker.Entries<IHasTimestamps>())
             {
                 if (entry.State == EntityState.Added)
@@ -67,6 +71,32 @@ namespace POS.Infrastructure.Data
                     entry.Entity.UpdatedDate = utcNow;
                 }
             }
+
+            // ADDED: Handle entities that inherit from BaseAuditableEntity
+            foreach (var entry in ChangeTracker.Entries<BaseAuditableEntity>())
+            {
+                if (entry.State == EntityState.Added)
+                {
+                    entry.Entity.CreatedDate = utcNow;
+                    // You can set CreatedBy here if you have access to current user context
+                    // entry.Entity.CreatedBy = _currentUserService.UserId;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.UpdatedDate = utcNow;
+                    // You can set UpdatedBy here if you have access to current user context
+                    // entry.Entity.UpdatedBy = _currentUserService.UserId;
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    // Implement soft delete
+                    entry.State = EntityState.Modified;
+                    entry.Entity.IsDeleted = true;
+                    entry.Entity.DeletedDate = utcNow;
+                    // You can set DeletedBy here if you have access to current user context
+                    // entry.Entity.DeletedBy = _currentUserService.UserId;
+                }
+            }
         }
 
         // ----------------- Model Building -----------------
@@ -74,17 +104,6 @@ namespace POS.Infrastructure.Data
         {
             base.OnModelCreating(builder);
             builder.HasDefaultSchema("pos");
-
-            // ---------------- PRODUCT ----------------
-            builder.Entity<Product>(entity =>
-            {
-                entity.ToTable("products");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
-                entity.Property(x => x.Price).HasPrecision(18, 2);
-                entity.Property(x => x.IsActive).HasDefaultValue(true);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-            });
 
             // ---------------- PERSON ----------------
             builder.Entity<Person>(entity =>
@@ -159,87 +178,7 @@ namespace POS.Infrastructure.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            builder.Entity<LibraryMember>(entity =>
-{
-    entity.ToTable("library_members");
-    entity.HasKey(x => x.Id);
-
-    entity.Property(x => x.MembershipNo).HasMaxLength(50).IsRequired();
-    entity.Property(x => x.MembershipType).HasMaxLength(50).IsRequired();
-    entity.Property(x => x.Email).HasMaxLength(100).IsRequired();
-    entity.Property(x => x.Status).HasDefaultValue(0); // Pending by default
-    entity.Property(x => x.IsActive).HasDefaultValue(true);
-    entity.Property(x => x.MaxBooksAllowed).HasDefaultValue(5);
-    entity.Property(x => x.Address).HasMaxLength(500);
-    entity.Property(x => x.PhoneNumber).HasMaxLength(20);
-    entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-    entity.Property(x => x.ApproveBy).IsRequired(false); // Nullable - null until approved/rejected/cancelled
-
-    // Indexes
-    entity.HasIndex(x => x.MembershipNo).IsUnique();
-    entity.HasIndex(x => x.Email); // Non-unique index for search
-
-    // Relationship: LibraryMember -> Person (the member)
-    entity.HasOne(x => x.Person)
-          .WithMany()
-          .HasForeignKey(x => x.PersonId)
-          .OnDelete(DeleteBehavior.Restrict);
-
-    // Relationship: LibraryMember -> Person (who approved/rejected/cancelled)
-    entity.HasOne(x => x.ApprovedByUser)
-          .WithMany()
-          .HasForeignKey(x => x.ApproveBy)
-          .OnDelete(DeleteBehavior.Restrict)
-          .IsRequired(false);
-});
-
-            builder.Entity<BookIssue>(entity =>
-            {
-                entity.ToTable("book_issues");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Status).HasMaxLength(50).IsRequired().HasDefaultValue("Issued");
-                entity.Property(x => x.Notes).HasMaxLength(500);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-
-                entity.HasOne(x => x.Book)
-                    .WithMany()
-                    .HasForeignKey(x => x.BookId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(x => x.LibraryMember)
-                    .WithMany()
-                    .HasForeignKey(x => x.LibraryMemberId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(x => x.IssuedByPerson)
-                    .WithMany()
-                    .HasForeignKey(x => x.IssuedByPersonId)
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
-
-            // ---------------- BOOK ----------------
-            builder.Entity<Book>(entity =>
-            {
-                entity.ToTable("books");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Title).HasMaxLength(200).IsRequired();
-                entity.Property(x => x.Author).HasMaxLength(100).IsRequired();
-                entity.Property(x => x.Subject).HasMaxLength(100).IsRequired();
-                entity.Property(x => x.ISBN).HasMaxLength(50);
-                entity.Property(x => x.Publisher).HasMaxLength(100);
-                entity.Property(x => x.Edition).HasMaxLength(50);
-                entity.Property(x => x.Price).HasPrecision(18, 2);
-                entity.Property(x => x.RackNo).HasMaxLength(50).IsRequired();
-                entity.Property(x => x.No).HasMaxLength(50).IsRequired();
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-
-                // Category relationship
-                entity.HasOne(x => x.Category)
-                      .WithMany(c => c.Books)
-                      .HasForeignKey(x => x.CategoryId)
-                      .OnDelete(DeleteBehavior.SetNull);
-            });
-
+            // ---------------- CATEGORY ----------------
             builder.Entity<Category>(entity =>
             {
                 entity.ToTable("categories");
@@ -248,8 +187,169 @@ namespace POS.Infrastructure.Data
                 entity.Property(x => x.Description).HasMaxLength(500);
                 entity.Property(x => x.IsActive).HasDefaultValue(true);
                 entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-
                 entity.HasIndex(x => x.Name).IsUnique();
+                entity.Property(x => x.Image)
+                      .HasColumnType("text");
+            });
+
+            builder.Entity<Branch>(entity =>
+            {
+                entity.ToTable("branches");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.BranchName)
+                    .HasMaxLength(200)
+                    .IsRequired();
+                entity.Property(x => x.Logo)
+                    .HasColumnType("text");
+                entity.Property(x => x.Status)
+                    .HasMaxLength(20)
+                    .HasDefaultValue("Active")
+                    .IsRequired();
+                entity.Property(x => x.Description)
+                    .HasMaxLength(1000);
+                entity.Property(x => x.IsDeleted)
+                    .HasDefaultValue(false);
+                entity.HasIndex(x => x.BranchName)
+                    .IsUnique()
+                    .HasFilter("\"IsDeleted\" = false");
+                entity.HasMany(x => x.Products)
+                    .WithOne(p => p.Branch)
+                    .HasForeignKey(p => p.BranchId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ---------------- PRODUCT ----------------
+            builder.Entity<Product>(entity =>
+            {
+                entity.ToTable("products");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Description).HasMaxLength(1000);
+                entity.Property(x => x.SKU).HasMaxLength(50);
+                entity.Property(x => x.Barcode).HasMaxLength(50);
+                entity.Property(x => x.Price).HasPrecision(18, 2);
+                entity.Property(x => x.CostPrice).HasPrecision(18, 2);
+                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
+
+                // Category relationship
+                entity.HasOne(x => x.Category)
+                      .WithMany(c => c.Products)
+                      .HasForeignKey(x => x.CategoryId)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            // ---------------- SERIAL NUMBER ----------------
+            builder.Entity<SerialNumber>(entity =>
+            {
+                entity.ToTable("serial_numbers");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.SerialNo).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Status).HasMaxLength(50);
+                entity.Property(x => x.Notes).HasMaxLength(500);
+                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
+
+                // Relationship with Product
+                entity.HasOne(x => x.Product)
+                      .WithMany(p => p.SerialNumbers)
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                // Unique constraint: SerialNo must be unique per product
+                entity.HasIndex(x => new { x.ProductId, x.SerialNo })
+                      .IsUnique()
+                      .HasFilter("\"IsDeleted\" = false");
+            });
+
+            builder.Entity<StockMovement>(entity =>
+            {
+                entity.ToTable("stock_movements");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Type).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.Quantity).IsRequired();
+                entity.Property(x => x.Price).HasPrecision(18, 2);
+                entity.Property(x => x.CostPrice).HasPrecision(18, 2);
+                entity.Property(x => x.Notes).HasMaxLength(500);
+                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
+            });
+
+            builder.Entity<Order>(entity =>
+            {
+                entity.ToTable("orders");
+
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.OrderNumber)
+                    .HasMaxLength(50)
+                    .IsRequired();
+
+                entity.HasIndex(x => x.OrderNumber)
+                    .IsUnique();
+
+                entity.Property(x => x.SubTotal).HasPrecision(18, 2);
+                entity.Property(x => x.DiscountAmount).HasPrecision(18, 2);
+                entity.Property(x => x.TaxAmount).HasPrecision(18, 2);
+                entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
+
+                entity.Property(x => x.Status)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.PaymentStatus)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.Property(x => x.SaleType)
+                    .HasConversion<string>()
+                    .HasMaxLength(50);
+
+                entity.HasMany(x => x.OrderItems)
+                    .WithOne(oi => oi.Order)
+                    .HasForeignKey(oi => oi.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<OrderItem>(entity =>
+            {
+                entity.ToTable("order_items");
+                entity.HasKey(x => x.Id);
+                entity.HasOne(oi => oi.SerialNumber)
+                    .WithOne(sn => sn.OrderItem)
+                    .HasForeignKey<OrderItem>(oi => oi.SerialNumberId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Discount>(entity =>
+            {
+                entity.ToTable("discounts");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Description).HasMaxLength(1000);
+                entity.Property(x => x.Type)
+                    .HasMaxLength(20)
+                    .HasDefaultValue("Percentage")
+                    .IsRequired();
+                entity.Property(x => x.Value).HasPrecision(18, 2);
+                entity.Property(x => x.MinOrderAmount).HasPrecision(18, 2);
+                entity.Property(x => x.IsActive).HasDefaultValue(true);
+                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
+            });
+
+            builder.Entity<ProductDiscount>(entity =>
+            {
+                entity.ToTable("product_discounts");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
+                entity.HasIndex(x => new { x.DiscountId, x.ProductId })
+                      .IsUnique()
+                      .HasFilter("\"IsDeleted\" = false");
+                entity.HasOne(x => x.Discount)
+                      .WithMany(d => d.ProductDiscounts)
+                      .HasForeignKey(x => x.DiscountId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Product)
+                      .WithMany()
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }
