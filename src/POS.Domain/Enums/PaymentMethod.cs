@@ -9,8 +9,7 @@ namespace POS.Domain.Enums
     public enum PaymentMethodCode
     {
         Cash = 1,
-        Card = 2,
-        Points = 3,
-        Scan = 4,
+        BankQR = 2,
+        Point = 3,
     }
 }

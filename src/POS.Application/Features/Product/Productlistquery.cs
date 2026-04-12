@@ -68,6 +68,8 @@ namespace POS.Application.Features.Product
                 Barcode = p.Barcode,
                 Price = p.Price,
                 CostPrice = p.CostPrice,
+                TaxRate = p.TaxRate,
+                IsSerialNumber = p.IsSerialNumber,
                 Stock = p.Stock,
                 ImageProduct = p.ImageProduct,
                 RAM = p.RAM,

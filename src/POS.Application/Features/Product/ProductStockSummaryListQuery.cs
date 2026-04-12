@@ -39,7 +39,8 @@ namespace POS.Application.Features.Product
             var end = request.EndDate?.Date.AddDays(1).AddTicks(-1);
 
             var serialQuery = _context.SerialNumbers
-                .Where(s => !s.IsDeleted);
+                .Where(s => !s.IsDeleted)
+                .AsNoTracking();
 
             if (start.HasValue)
                 serialQuery = serialQuery.Where(s => s.CreatedDate >= start.Value);

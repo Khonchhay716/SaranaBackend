@@ -20,7 +20,7 @@ namespace POS.API.Controllers
 
         [HttpGet]
         // [RequirePermission("order:read")]
-        public async Task<ActionResult<PaginatedResult<OrderInfo>>> GetOrders([FromQuery] OrderListQuery query)
+        public async Task<ActionResult<PaginatedResult<OrderCreateResponse>>> GetOrders([FromQuery] OrderListQuery query)
         {
             var result = await _mediator.Send(query);
             return Ok(result);
@@ -41,6 +41,23 @@ namespace POS.API.Controllers
         {
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
+        }
+
+
+        [HttpPost("summary")]
+        public async Task<ActionResult<ApiResponse<OrderPreviewResponse>>> GetOrderSummary([FromBody] OrderSummaryQuery query)
+        {
+            var result = await _mediator.Send(query);
+            return Ok(result);
+        }
+
+
+        [HttpPost("{id:int}/refund")]
+        public async Task<IActionResult> Refund(int id, [FromBody] OrderRefundCommand command, CancellationToken ct)
+        {
+            command = command with { Id = id };
+            var result = await _mediator.Send(command, ct);
+            return result.Success ? Ok(result) : BadRequest(result);
         }
     }
 }

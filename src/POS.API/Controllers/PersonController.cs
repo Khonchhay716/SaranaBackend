@@ -95,5 +95,13 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
         }
+
+        [HttpPut("{userId}/reset-password-admin")]
+        [Authorize]
+        public async Task<IActionResult> ResetPassword(int userId, ResetPasswordCommand command)
+        {
+            command = command with { UserId = userId };
+            return Ok(await _mediator.Send(command));
+        }
     }
 }

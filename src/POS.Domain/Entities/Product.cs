@@ -1,6 +1,4 @@
-// POS.Domain/Entities/Product.cs
 using POS.Domain.Common;
-
 namespace POS.Domain.Entities
 {
     public class Product : BaseAuditableEntity
@@ -11,6 +9,7 @@ namespace POS.Domain.Entities
         public string? Barcode { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
+         public decimal TaxRate { get; set; } = 0;
         public int Stock { get; set; }
         public string? ImageProduct { get; set; }
         public bool IsSerialNumber { get; set; } = false;
@@ -24,6 +23,7 @@ namespace POS.Domain.Entities
 
         public ICollection<SerialNumber> SerialNumbers { get; set; } = new List<SerialNumber>();
         public ICollection<StockMovement> StockMovements { get; set; } = new List<StockMovement>();
+         public ICollection<ProductDiscount> ProductDiscounts { get; set; } = new List<ProductDiscount>();
     }
 
     public class SerialNumber : BaseAuditableEntity
@@ -43,12 +43,10 @@ namespace POS.Domain.Entities
     {
         public int ProductId { get; set; }
         public Product Product { get; set; } = null!;
-
         public string Type { get; set; } = string.Empty;
         public int Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal CostPrice { get; set; }
-
         public string? Notes { get; set; }
         public DateTimeOffset MovementDate { get; set; } = DateTimeOffset.UtcNow;
     }

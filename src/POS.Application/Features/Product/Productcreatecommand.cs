@@ -17,6 +17,7 @@ namespace POS.Application.Features.Product
         public string? Barcode { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
+        public decimal TaxRate { get; set; } = 0;
         public int? CategoryId { get; set; }
         public string? ImageProduct { get; set; }
         public bool IsSerialNumber { get; set; } = false;
@@ -33,6 +34,7 @@ namespace POS.Application.Features.Product
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
             RuleFor(x => x.MinStock).GreaterThanOrEqualTo(0);
+            RuleFor(x => x.TaxRate).InclusiveBetween(0, 100).WithMessage("TaxRate must be between 0 and 100.");
         }
     }
 
@@ -53,6 +55,13 @@ namespace POS.Application.Features.Product
             {
                 var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
                 return ApiResponse<ProductInfo>.BadRequest(errors);
+            }
+            if (!string.IsNullOrWhiteSpace(request.Barcode))
+            {
+                var barcodeExists = await _context.Products
+                    .AnyAsync(p => p.Barcode == request.Barcode && !p.IsDeleted, cancellationToken);
+                if (barcodeExists)
+                    return ApiResponse<ProductInfo>.BadRequest($"Barcode '{request.Barcode}' is already in use.");
             }
 
             if (request.CategoryId.HasValue)
@@ -80,6 +89,7 @@ namespace POS.Application.Features.Product
                 Barcode = request.Barcode,
                 Price = request.Price,
                 CostPrice = request.CostPrice,
+                TaxRate = request.TaxRate,
                 CategoryId = request.CategoryId,
                 ImageProduct = request.ImageProduct,
                 Stock = 0,
@@ -92,8 +102,6 @@ namespace POS.Application.Features.Product
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync(cancellationToken);
-
-            // Reload with navigation props
             var created = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Branch)

@@ -11,6 +11,8 @@ namespace POS.Application.Features.Product
         public string? Barcode { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
+        public decimal TaxRate { get; set; }
+        public decimal TaxAmount => Price * (TaxRate / 100);
         public int Stock { get; set; }
         public string? ImageProduct { get; set; }
         public string? RAM { get; set; }
@@ -42,12 +44,15 @@ namespace POS.Application.Features.Product
         public string? Barcode { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
+        public decimal TaxRate { get; set; }                                 
+        public decimal TaxAmount => Price * (TaxRate / 100);
         public int Stock { get; set; }
         public string? ImageProduct { get; set; }
         public string? RAM { get; set; }
         public string? Storage { get; set; }
         public TypeNamebase? Category { get; set; }
         public TypeNamebase? Branch { get; set; }
+         public bool IsSerialNumber { get; set; }
     }
 
     public class SerialNumberInfo

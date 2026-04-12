@@ -121,8 +121,9 @@ namespace POS.Application.Features.Auth
                 UserId = person.Id,
                 Username = person.Username,
                 Email = person.Email,
-                FirstName = person.FirstName,
-                LastName = person.LastName,
+                PersonType = person.Type.ToString(),
+                StaffId = person.StaffId ?? 0,
+                CustomerId = person.CustomerId ?? 0,
                 Permissions = permissions,
                 Roles = roles
             };

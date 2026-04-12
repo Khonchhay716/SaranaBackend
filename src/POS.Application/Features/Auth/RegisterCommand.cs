@@ -113,9 +113,9 @@ namespace POS.Application.Features.Auth
                 Username = request.Username,
                 Email = request.Email,
                 PasswordHash = hashedPassword,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                PhoneNumber = request.PhoneNumber,
+                // FirstName = request.FirstName,
+                // LastName = request.LastName,
+                // PhoneNumber = request.PhoneNumber,
                 IsActive = true,
                 CreatedDate = DateTime.UtcNow
             };
@@ -164,8 +164,6 @@ namespace POS.Application.Features.Auth
                 UserId = person.Id,
                 Username = person.Username,
                 Email = person.Email,
-                FirstName = person.FirstName,
-                LastName = person.LastName
             };
 
             return ApiResponse<AuthResponse>.Created(response, "User registered successfully");
@@ -173,3 +171,117 @@ namespace POS.Application.Features.Auth
     }
 }
 
+
+
+
+
+// using FluentValidation;
+// using MediatR;
+// using Microsoft.EntityFrameworkCore;
+// using POS.Application.Common.Dto;
+// using POS.Application.Common.Interfaces;
+// using POS.Domain.Entities;
+// using System;
+// using System.Collections.Generic;
+// using System.Threading;
+// using System.Threading.Tasks;
+
+// namespace POS.Application.Features.Auth
+// {
+//     public record RegisterCommand : IRequest<ApiResponse<AuthResponse>>
+//     {
+//         public string Username { get; set; } = string.Empty;
+//         public string Email { get; set; } = string.Empty;
+//         public string Password { get; set; } = string.Empty;
+//         public string ConfirmPassword { get; set; } = string.Empty;
+//         public string FirstName { get; set; } = string.Empty;
+//         public string LastName { get; set; } = string.Empty;
+//         public string? PhoneNumber { get; set; }
+//     }
+
+//     public class RegisterCommandValidator : AbstractValidator<RegisterCommand>
+//     {
+//         public RegisterCommandValidator()
+//         {
+//             RuleFor(x => x.Username).NotEmpty().MinimumLength(3).MaximumLength(50);
+//             RuleFor(x => x.Email).NotEmpty().EmailAddress();
+//             RuleFor(x => x.Password).NotEmpty().MinimumLength(8);
+//             RuleFor(x => x.ConfirmPassword).Equal(x => x.Password).WithMessage("Passwords do not match");
+//             RuleFor(x => x.FirstName).NotEmpty();
+//             RuleFor(x => x.LastName).NotEmpty();
+//         }
+//     }
+
+//     public class RegisterCommandHandler : IRequestHandler<RegisterCommand, ApiResponse<AuthResponse>>
+//     {
+//         private readonly IMyAppDbContext _context;
+//         private readonly IPasswordHasher _passwordHasher;
+//         private readonly IJwtService _jwtService;
+
+//         public RegisterCommandHandler(IMyAppDbContext context, IPasswordHasher passwordHasher, IJwtService jwtService)
+//         {
+//             _context = context;
+//             _passwordHasher = passwordHasher;
+//             _jwtService = jwtService;
+//         }
+
+//         public async Task<ApiResponse<AuthResponse>> Handle(RegisterCommand request, CancellationToken cancellationToken)
+//         {
+//             if (await _context.Persons.AnyAsync(p => p.Username == request.Username || p.Email == request.Email, cancellationToken))
+//                 return ApiResponse<AuthResponse>.BadRequest("Username or Email already exists");
+
+//             // 1. បង្កើត Customer Profile ជាមុន (សម្រាប់ការ Register ពីក្រៅ)
+//             var customer = new Customer
+//             {
+//                 FirstName = request.FirstName,
+//                 LastName = request.LastName,
+//                 PhoneNumber = request.PhoneNumber,
+//                 CreatedDate = DateTime.UtcNow
+//             };
+//             _context.Customers.Add(customer);
+//             await _context.SaveChangesAsync(cancellationToken);
+
+//             // 2. បង្កើត Person ហើយ Link ទៅ CustomerId
+//             var person = new Person
+//             {
+//                 Username = request.Username,
+//                 Email = request.Email,
+//                 PasswordHash = _passwordHasher.HashPassword(request.Password),
+//                 Type = PersonType.Customer,
+//                 CustomerId = customer.Id, // ✅ ភ្ជាប់ ID
+//                 IsActive = true,
+//                 CreatedDate = DateTime.UtcNow
+//             };
+
+//             // 3. Assign Default Role "User"
+//             var defaultRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User", cancellationToken);
+//             if (defaultRole != null) person.PersonRoles.Add(new PersonRole { RoleId = defaultRole.Id });
+
+//             _context.Persons.Add(person);
+//             await _context.SaveChangesAsync(cancellationToken);
+
+//             var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, new List<string> { "User" });
+//             var refreshToken = _jwtService.GenerateRefreshToken();
+
+//             _context.RefreshTokens.Add(new RefreshToken
+//             {
+//                 Token = refreshToken,
+//                 PersonId = person.Id,
+//                 ExpiryDate = DateTime.UtcNow.AddDays(7),
+//                 CreatedDate = DateTime.UtcNow
+//             });
+//             await _context.SaveChangesAsync(cancellationToken);
+
+//             return ApiResponse<AuthResponse>.Created(new AuthResponse
+//             {
+//                 AccessToken = accessToken,
+//                 RefreshToken = refreshToken,
+//                 UserId = person.Id,
+//                 Username = person.Username,
+//                 Email = person.Email,
+//                 FirstName = customer.FirstName,
+//                 LastName = customer.LastName
+//             }, "Registered successfully");
+//         }
+//     }
+// }

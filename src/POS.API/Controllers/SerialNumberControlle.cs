@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using POS.API.Attributes;
 using POS.API.Extensions;
 using POS.Application.Features.SerialNumber;  // ✅ Query + Commands all here now
- 
+
 namespace POS.API.Controllers
 {
     [ApiController]
@@ -11,13 +11,13 @@ namespace POS.API.Controllers
     public class SerialNumberController : ControllerBase
     {
         private readonly IMediator _mediator;
- 
+
         public SerialNumberController(IMediator mediator)
         {
             _mediator = mediator;
         }
- 
-        // GET api/serial-number?productId=5&page=1&pageSize=20&status=Available&search=IMEI
+
+
         [HttpGet]
         [RequirePermission("product:read")]
         public async Task<IActionResult> GetList([FromQuery] SerialNumberListQuery query, CancellationToken ct)
@@ -25,7 +25,7 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
- 
+
         // POST api/serial-number
         [HttpPost]
         [RequirePermission("product:update")]
@@ -34,7 +34,7 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(command, ct);
             return result.Success ? Ok(result) : BadRequest(result);
         }
- 
+
         // PUT api/serial-number/5
         [HttpPut("{id:int}")]
         [RequirePermission("product:update")]
@@ -46,7 +46,7 @@ namespace POS.API.Controllers
                 return result.Data == null ? NotFound(result) : BadRequest(result);
             return Ok(result);
         }
- 
+
         // DELETE api/serial-number/5
         [HttpDelete("{id:int}")]
         [RequirePermission("product:update")]
@@ -59,4 +59,3 @@ namespace POS.API.Controllers
         }
     }
 }
- 
