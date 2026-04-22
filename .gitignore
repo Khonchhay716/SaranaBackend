@@ -530,7 +530,6 @@ audit-*.log
 error-*.log
 
 
-## Uploads folder - រូបភាព Local មិន Push ទៅ GitHub
+## Uploads folder - មិន Push ទៅ GitHub
 **/Uploads/
-Uploads/* * / U p l o a d s /  
- 
+Uploads/
