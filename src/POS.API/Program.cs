@@ -128,32 +128,31 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-// CORS
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("AllowAll", policy =>
-//     {
-//         policy.AllowAnyOrigin()
-//               .AllowAnyMethod()
-//               .AllowAnyHeader();
-//     });
-// });
+// cors for run local
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowProduction", policy =>
     {
-        policy.WithOrigins("https://sarana-front-end.vercel.app")
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
+              .AllowAnyHeader();
     });
 });
+// // cors for run with deploy(server)
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowProduction", policy =>
+//     {
+//         policy.WithOrigins("https://sarana-front-end.vercel.app")
+//               .AllowAnyMethod()
+//               .AllowAnyHeader()
+//               .AllowCredentials();
+//     });
+// });
 
 var app = builder.Build();
 
-// ============================================
-// 🌱 AUTOMATIC DATABASE SEEDING
-// ============================================
+// dataseeding it create auto when server run with project new 
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -170,16 +169,10 @@ using (var scope = app.Services.CreateScope())
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred while seeding the database.");
 
-        Console.WriteLine("\n========================================");
-        Console.WriteLine("❌ CRITICAL ERROR DURING SEEDING:");
+        Console.WriteLine("create data seeding is error");
         Console.WriteLine($"   {ex.Message}");
-        Console.WriteLine("========================================\n");
-
-        // Optionally: throw to prevent app from starting with incomplete database
-        // throw;
     }
 }
-// ============================================
 
 // Create Uploads folder
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");

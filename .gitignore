@@ -528,3 +528,8 @@ secrets.config
 pos-*.log
 audit-*.log
 error-*.log
+
+
+## Uploads folder - រូបភាព Local មិន Push ទៅ GitHub
+**/Uploads/
+Uploads/
