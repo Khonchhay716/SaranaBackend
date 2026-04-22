@@ -532,4 +532,5 @@ error-*.log
 
 ## Uploads folder - រូបភាព Local មិន Push ទៅ GitHub
 **/Uploads/
-Uploads/
+Uploads/* * / U p l o a d s /  
+ 
