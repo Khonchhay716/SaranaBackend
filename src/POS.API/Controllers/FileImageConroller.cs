@@ -149,7 +149,7 @@ namespace POS.API.Controllers
             }
         }
 
-        // ✅ Delete — Local Folder or Cloudinary
+        // Delete — Local Folder or Cloudinary
         [HttpDelete("delete")]
         [AllowAnonymous]
         public async Task<IActionResult> Delete([FromQuery] string fileUrl)
@@ -158,10 +158,10 @@ namespace POS.API.Controllers
             {
                 if (string.IsNullOrEmpty(fileUrl))
                     return BadRequest(new { error = "File URL is required" });
-
+                /// check condition it on local or server 
                 if (_env.IsDevelopment())
                 {
-                    // 🖥️ Local → Delete ពី Folder
+                    /// in local it wil to delete in folder
                     var fileName = Path.GetFileName(new Uri(fileUrl).LocalPath);
                     var filePath = Path.Combine(_uploadFolder, fileName);
 
@@ -172,16 +172,12 @@ namespace POS.API.Controllers
                 }
                 else
                 {
-                    // 🚀 Production → Delete ពី Cloudinary
-                    // URL: https://res.cloudinary.com/cloud/image/upload/v123456/sarana-pos/filename.jpg
-                    // PublicId: sarana-pos/filename
+                    /// in server it will to delete in cloudinary 
                     var uri = new Uri(fileUrl);
                     var segments = uri.AbsolutePath.Split('/');
                     var uploadIndex = Array.IndexOf(segments, "upload");
-
-                    // Skip "upload" + version (v123456) → ចាប់ Folder/FileName
                     var publicIdWithExt = string.Join("/", segments.Skip(uploadIndex + 2));
-                    var publicId = Path.ChangeExtension(publicIdWithExt, null); // លុប Extension
+                    var publicId = Path.ChangeExtension(publicIdWithExt, null);
 
                     var deleteParams = new DeletionParams(publicId);
                     var result = await _cloudinary.DestroyAsync(deleteParams);

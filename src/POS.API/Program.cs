@@ -204,5 +204,5 @@ app.UseCors("AllowProduction");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapGet("/health", () => Results.Ok(new { status = "OK", time = DateTime.Now })).AllowAnonymous();
 app.Run();
