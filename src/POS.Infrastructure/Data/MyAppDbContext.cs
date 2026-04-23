@@ -414,7 +414,7 @@ namespace POS.Infrastructure.Data
                       .HasForeignKey(x => x.DiscountId)
                       .OnDelete(DeleteBehavior.Cascade);
                 entity.HasOne(x => x.Product)
-                      .WithMany()
+                      .WithMany(p => p.ProductDiscounts)
                       .HasForeignKey(x => x.ProductId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
