@@ -533,3 +533,8 @@ error-*.log
 ## Uploads folder - មិន Push ទៅ GitHub
 **/Uploads/
 Uploads/
+
+
+# .gitignore
+appsettings.json
+appsettings.Development.json

@@ -312,6 +312,8 @@ namespace POS.Infrastructure.Data
                       .IsUnique()
                       .HasDatabaseName("UX_SerialNumber_SerialNo")
                       .HasFilter("\"IsDeleted\" = false");
+                entity.HasIndex(x => new { x.IsDeleted, x.CreatedDate })
+                      .HasDatabaseName("IX_SerialNumbers_IsDeleted_CreatedDate");
             });
 
             builder.Entity<StockMovement>(entity =>
@@ -324,6 +326,8 @@ namespace POS.Infrastructure.Data
                 entity.Property(x => x.CostPrice).HasPrecision(18, 2);
                 entity.Property(x => x.Notes).HasMaxLength(500);
                 entity.Property(x => x.IsDeleted).HasDefaultValue(false);
+                entity.HasIndex(x => new { x.IsDeleted, x.CreatedDate, x.Type })
+                      .HasDatabaseName("IX_StockMovements_IsDeleted_CreatedDate_Type");
             });
 
             builder.Entity<Order>(entity =>
@@ -368,11 +372,14 @@ namespace POS.Infrastructure.Data
                     .IsRequired(false)
                     .OnDelete(DeleteBehavior.SetNull);
 
-                entity.HasIndex(x => x.OrderDate);
-                entity.HasIndex(x => x.StaffId);
-                entity.HasIndex(x => x.CustomerId);
-                entity.HasIndex(x => x.Status);
-                entity.HasIndex(x => x.PaymentStatus);
+                entity.HasIndex(x => new { x.IsDeleted, x.OrderDate, x.Status, x.PaymentStatus })
+                      .HasDatabaseName("IX_Orders_Dashboard_Main");
+                entity.HasIndex(x => new { x.IsDeleted, x.StaffId, x.OrderDate })
+                      .HasDatabaseName("IX_Orders_StaffId_Date");
+                entity.HasIndex(x => new { x.IsDeleted, x.CustomerId, x.OrderDate })
+                      .HasDatabaseName("IX_Orders_CustomerId_Date");
+                entity.HasIndex(x => x.OrderNumber)
+                      .IsUnique();
             });
 
             builder.Entity<OrderItem>(entity =>

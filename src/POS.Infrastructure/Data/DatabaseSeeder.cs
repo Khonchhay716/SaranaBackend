@@ -26,6 +26,7 @@ namespace POS.Infrastructure.Data
             {
                 await _context.Database.MigrateAsync();
                 await SeedSuperAdminRoleAsync();
+                await SeedUserRoleAsync();
                 await SeedSuperAdminUserAsync();
                 await SeedAllPermissionsToSuperAdminAsync();
 
@@ -67,6 +68,29 @@ namespace POS.Infrastructure.Data
                 Console.WriteLine("✓ SuperAdmin role already exists.");
             }
         }
+        private async Task SeedUserRoleAsync()
+        {
+            var userRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == "User Default" && !r.IsDeleted);
+
+            if (userRole == null)
+            {
+                _context.Roles.Add(new Role
+                {
+                    Name = "User Default",
+                    Description = "User Role that create with yourself",
+                    IsDeleted = false,
+                    CreatedDate = DateTimeOffset.UtcNow,
+                    UpdatedDate = DateTimeOffset.UtcNow
+                });
+                await _context.SaveChangesAsync();
+                Console.WriteLine("✓ User Default role created.");
+            }
+            else
+            {
+                Console.WriteLine("✓ User Default role already exists.");
+            }
+        }
 
         // function for create user seeding 
         private async Task SeedSuperAdminUserAsync()
@@ -85,7 +109,7 @@ namespace POS.Infrastructure.Data
                     PasswordHash = hashedPassword,
                     IsActive = true,
                     IsDeleted = false,
-                    StaffId = null, 
+                    StaffId = null,
                     CustomerId = null,
                     CreatedDate = DateTimeOffset.UtcNow,
                     UpdatedDate = DateTimeOffset.UtcNow

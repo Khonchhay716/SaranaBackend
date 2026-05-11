@@ -5,12 +5,14 @@ using POS.Application.Common.Interfaces;
 
 namespace POS.Application.Features.Product
 {
+    // QUERY
     public class ProductStockTotalSummaryQuery : IRequest<ApiResponse<ProductStockTotalSummaryInfo>>
     {
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
 
+    // RESPONSE
     public class ProductStockTotalSummaryInfo
     {
         public int TotalStockSerial { get; set; }
@@ -21,6 +23,7 @@ namespace POS.Application.Features.Product
         public decimal TotalCostAll { get; set; }
     }
 
+    // HANDLER
     public class ProductStockTotalSummaryQueryHandler
         : IRequestHandler<ProductStockTotalSummaryQuery, ApiResponse<ProductStockTotalSummaryInfo>>
     {
@@ -35,9 +38,16 @@ namespace POS.Application.Features.Product
             ProductStockTotalSummaryQuery request,
             CancellationToken cancellationToken)
         {
-            var start = request.StartDate?.Date;
-            var end = request.EndDate?.Date.AddDays(1).AddTicks(-1);
+            // Date Filter
+            DateTimeOffset? start = request.StartDate.HasValue
+                ? new DateTimeOffset(request.StartDate.Value.Date, TimeSpan.Zero)
+                : null;
 
+            DateTimeOffset? end = request.EndDate.HasValue
+                ? new DateTimeOffset(request.EndDate.Value.Date.AddDays(1), TimeSpan.Zero)
+                : null;
+
+            // Serial Numbers
             var serialQuery = _context.SerialNumbers
                 .Where(s => !s.IsDeleted)
                 .AsNoTracking();
@@ -46,48 +56,60 @@ namespace POS.Application.Features.Product
                 serialQuery = serialQuery.Where(s => s.CreatedDate >= start.Value);
 
             if (end.HasValue)
-                serialQuery = serialQuery.Where(s => s.CreatedDate <= end.Value);
+                serialQuery = serialQuery.Where(s => s.CreatedDate < end.Value);
 
+            // ✅ GroupBy(1) + CASE WHEN = Single SQL query
             var serialStats = await serialQuery
                 .GroupBy(x => 1)
                 .Select(g => new
                 {
                     TotalStock = g.Count(),
-                    TotalCost = g.Sum(x => x.CostPrice)
+                    TotalCost  = g.Sum(x => x.CostPrice)
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
+            // Stock Movements
             var movementsQuery = _context.StockMovements
-                .Where(sm => !sm.IsDeleted);
+                .Where(sm => !sm.IsDeleted)
+                .AsNoTracking();
 
             if (start.HasValue)
                 movementsQuery = movementsQuery.Where(sm => sm.CreatedDate >= start.Value);
 
             if (end.HasValue)
-                movementsQuery = movementsQuery.Where(sm => sm.CreatedDate <= end.Value);
+                movementsQuery = movementsQuery.Where(sm => sm.CreatedDate < end.Value);
 
+            // ✅ GroupBy(1) + ternary CASE WHEN = Single SQL query
             var movementStats = await movementsQuery
                 .GroupBy(sm => 1)
                 .Select(g => new
                 {
-                    StockIn = g.Sum(x => x.Type == "StockIn" ? x.Quantity : 0),
-                    StockOut = g.Sum(x => x.Type == "StockOut" ? x.Quantity : 0),
-                    TotalCostIn = g.Sum(x => x.Type == "StockIn" ? x.CostPrice * x.Quantity : 0),
-                    TotalCostOut = g.Sum(x => x.Type == "StockOut" ? x.CostPrice * x.Quantity : 0)
+                    StockIn      = g.Sum(x => x.Type == "StockIn"  ? x.Quantity : 0),
+                    StockOut     = g.Sum(x => x.Type == "StockOut" ? x.Quantity : 0),
+                    TotalCostIn  = g.Sum(x => x.Type == "StockIn"
+                                       ? (decimal?)x.CostPrice * x.Quantity : 0),
+                    TotalCostOut = g.Sum(x => x.Type == "StockOut"
+                                       ? (decimal?)x.CostPrice * x.Quantity : 0),
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
+            // Combine Result
             var info = new ProductStockTotalSummaryInfo
             {
+                // Serial
                 TotalStockSerial = serialStats?.TotalStock ?? 0,
-                TotalCostSerial = serialStats?.TotalCost ?? 0,
+                TotalCostSerial  = serialStats?.TotalCost ?? 0,
 
-                TotalStockMovement = (movementStats?.StockIn ?? 0) - (movementStats?.StockOut ?? 0),
-                TotalCostMovement = (movementStats?.TotalCostIn ?? 0) - (movementStats?.TotalCostOut ?? 0),
+                // Movement (StockIn - StockOut)
+                TotalStockMovement = (movementStats?.StockIn ?? 0)
+                                   - (movementStats?.StockOut ?? 0),
+                TotalCostMovement  = (movementStats?.TotalCostIn ?? 0)
+                                   - (movementStats?.TotalCostOut ?? 0),
 
+                // All = Serial + Movement
                 TotalStockAll = (serialStats?.TotalStock ?? 0)
                               + ((movementStats?.StockIn ?? 0) - (movementStats?.StockOut ?? 0)),
-                TotalCostAll = (serialStats?.TotalCost ?? 0)
+                TotalCostAll  = (serialStats?.TotalCost ?? 0)
                               + ((movementStats?.TotalCostIn ?? 0) - (movementStats?.TotalCostOut ?? 0))
             };
 
