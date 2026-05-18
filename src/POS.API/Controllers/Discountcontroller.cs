@@ -1,6 +1,7 @@
 // POS.API/Controllers/DiscountController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.Discount;
 
 namespace POS.API.Controllers
@@ -16,32 +17,32 @@ namespace POS.API.Controllers
             _mediator = mediator;
         }
 
-        // GET api/discount?page=1&pageSize=10&search=sale&isActive=true&isGlobal=true
         [HttpGet]
+        [RequirePermission("discount:read")]
         public async Task<IActionResult> GetList([FromQuery] DiscountListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/discount/lookup?page=1&pageSize=20&search=sale
         [HttpGet("lookup")]
+        // [RequirePermission("discount:lookup")]
         public async Task<IActionResult> Lookup([FromQuery] DiscountLookupListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/discount/5
         [HttpGet("{id:int}")]
+        [RequirePermission("discount:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new DiscountQuery { Id = id }, ct);
             return result.Success ? Ok(result) : NotFound(result);
         }
 
-        // POST api/discount
         [HttpPost]
+        [RequirePermission("discount:create")]
         public async Task<IActionResult> Create([FromBody] DiscountCreateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);
@@ -50,8 +51,8 @@ namespace POS.API.Controllers
                 : BadRequest(result);
         }
 
-        // PUT api/discount/5
         [HttpPut("{id:int}")]
+        [RequirePermission("discount:update")]
         public async Task<IActionResult> Update(int id, [FromBody] DiscountUpdateCommand command, CancellationToken ct)
         {
             command = command with { Id = id };
@@ -61,8 +62,8 @@ namespace POS.API.Controllers
             return Ok(result);
         }
 
-        // DELETE api/discount/5
         [HttpDelete("{id:int}")]
+        [RequirePermission("discount:delete")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new DiscountDeleteCommand(id), ct);

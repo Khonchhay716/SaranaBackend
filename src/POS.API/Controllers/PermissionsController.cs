@@ -20,24 +20,23 @@ namespace POS.API.Controllers
         }
 
         [HttpGet]
-        [RequirePermission("permission:read")]  // ⭐ Use proper permission check
         public async Task<ActionResult<List<PermissionInfo>>> GetAllPermissions()
         {
             var result = await _mediator.Send(new GetAllPermissionsQuery());
             return Ok(result);
         }
 
-        [HttpGet("role/{roleId}")]
-        [RequirePermission("permission:read")]  // ⭐ Use proper permission check
-        public async Task<IActionResult> GetRolePermissions(int roleId)
-        {
-            var query = new GetRolePermissionsQuery(roleId);
-            var result = await _mediator.Send(query);
+        // [HttpGet("role/{roleId}")]
+        // [RequirePermission("permission:update")]
+        // public async Task<IActionResult> GetRolePermissions(int roleId)
+        // {
+        //     var query = new GetRolePermissionsQuery(roleId);
+        //     var result = await _mediator.Send(query);
             
-            if (result == null)
-                return NotFound($"Role with ID {roleId} not found");
+        //     if (result == null)
+        //         return NotFound($"Role with ID {roleId} not found");
                 
-            return Ok(result);
-        }
+        //     return Ok(result);
+        // }
     }
 }

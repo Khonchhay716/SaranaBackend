@@ -18,25 +18,23 @@ namespace POS.API.Controllers
         }
         
         [HttpGet]
-        [RequirePermission("product:read")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> GetList([FromQuery] StockMovementListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
  
-        // POST api/stock-movement
         [HttpPost]
-        [RequirePermission("product:update")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> Create([FromBody] StockMovementCreateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);
             return result.Success ? Ok(result) : BadRequest(result);
         }
  
-        // PUT api/stock-movement/5
         [HttpPut("{id:int}")]
-        [RequirePermission("product:update")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> Update(int id, [FromBody] StockMovementUpdateCommand command, CancellationToken ct)
         {
             command = command with { Id = id };
@@ -46,9 +44,8 @@ namespace POS.API.Controllers
             return Ok(result);
         }
  
-        // DELETE api/stock-movement/5
         [HttpDelete("{id:int}")]
-        [RequirePermission("product:update")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new StockMovementDeleteCommand(id), ct);

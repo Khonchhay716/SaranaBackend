@@ -13,14 +13,14 @@ namespace POS.Application.Features.Category
 {
 
     // Query Request
-    public class CategoryLookupListQuery : PaginationRequest, IRequest<PaginatedResult<CategoryInfoLookup>>
+    public class CategoryLookupListQuery : PaginationRequest, IRequest<PaginatedResult<CategoryInfo>>
     {
         public string? Search { get; set; }
         public bool? IsActive { get; set; }
     }
 
     // Query Handler
-    public class CategoryLookupListQueryHandler : IRequestHandler<CategoryLookupListQuery, PaginatedResult<CategoryInfoLookup>>
+    public class CategoryLookupListQueryHandler : IRequestHandler<CategoryLookupListQuery, PaginatedResult<CategoryInfo>>
     {
         private readonly IMyAppDbContext _context;
 
@@ -29,7 +29,7 @@ namespace POS.Application.Features.Category
             _context = context;
         }
 
-        public async Task<PaginatedResult<CategoryInfoLookup>> Handle(CategoryLookupListQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<CategoryInfo>> Handle(CategoryLookupListQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Categories
                 .Where(c => !c.IsDeleted)
@@ -52,10 +52,13 @@ namespace POS.Application.Features.Category
             query = query.OrderByDescending(c => c.Id);
 
             // Project to CategoryInfo
-            var projectedQuery = query.Select(c => new CategoryInfoLookup
+            var projectedQuery = query.Select(c => new CategoryInfo
             {
                 Id = c.Id,
                 Name = c.Name,
+                Description = c.Description,
+                Image = c.Image,
+                IsActive = c.IsActive,
             });
 
             return await projectedQuery.ToPaginatedResultAsync(request.Page, request.PageSize);

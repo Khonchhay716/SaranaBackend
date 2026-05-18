@@ -19,6 +19,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("Sale-POS")]
+        // [RequirePermission("product:sale_pos")]
         public async Task<IActionResult> SaleLookup(
             [FromQuery] ProductSaleLookupQuery query,
             CancellationToken ct)
@@ -45,7 +46,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("{id}")]
-        [RequirePermission("product:read")]
+        [RequirePermission("product:view")]
         public async Task<IActionResult> GetProduct(int id)
         {
             var query = new ProductQuery { Id = id };
@@ -72,22 +73,22 @@ namespace POS.API.Controllers
         }
 
 
-        [HttpGet("{id:int}/summary")]
-        [RequirePermission("product:read")]
-        public async Task<IActionResult> GetStockSummary(int id, CancellationToken ct)
-        {
-            var result = await _mediator.Send(new ProductStockSummaryQuery { Id = id }, ct);
-            return this.ToActionResult(result);
-        }
+        // [HttpGet("{id:int}/summary")]
+        // [RequirePermission("product:read")]
+        // public async Task<IActionResult> GetStockSummary(int id, CancellationToken ct)
+        // {
+        //     var result = await _mediator.Send(new ProductStockSummaryQuery { Id = id }, ct);
+        //     return this.ToActionResult(result);
+        // }
 
-        [HttpGet("stock-summary")]
-        [RequirePermission("product:read")]
-        public async Task<IActionResult> GetStockSummaryList(
-        [FromQuery] ProductStockTotalSummaryQuery query, CancellationToken ct)
-        {
-            var result = await _mediator.Send(query, ct);
-            return Ok(result);
-        }
+        // [HttpGet("stock-summary")]
+        // [RequirePermission("product:read")]
+        // public async Task<IActionResult> GetStockSummaryList(
+        // [FromQuery] ProductStockTotalSummaryQuery query, CancellationToken ct)
+        // {
+        //     var result = await _mediator.Send(query, ct);
+        //     return Ok(result);
+        // }
 
     }
 }

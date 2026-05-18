@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.Leave;
 
 namespace POS.API.Controllers
@@ -16,11 +17,13 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("lookup")]
+        // [RequirePermission("leave_type:lookup")]
         public async Task<IActionResult> Lookup(
             [FromQuery] LeaveTypeLookupListQuery query, CancellationToken ct)
             => Ok(await _mediator.Send(query, ct));
 
         [HttpGet]
+        [RequirePermission("leave_type:read")]
         public async Task<IActionResult> GetList(
             [FromQuery] LeaveTypeListQuery query, CancellationToken ct)
         {
@@ -29,6 +32,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [RequirePermission("leave_type:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new LeaveTypeQuery { Id = id }, ct);
@@ -36,6 +40,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPost]
+        [RequirePermission("leave_type:create")]
         public async Task<IActionResult> Create(
             [FromBody] LeaveTypeCreateCommand command, CancellationToken ct)
         {
@@ -46,6 +51,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [RequirePermission("leave_type:update")]
         public async Task<IActionResult> Update(
             int id, [FromBody] LeaveTypeUpdateCommand command, CancellationToken ct)
         {
@@ -57,6 +63,7 @@ namespace POS.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [RequirePermission("leave_type:delete")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new LeaveTypeDeleteCommand(id), ct);

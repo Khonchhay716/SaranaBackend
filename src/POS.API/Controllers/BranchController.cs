@@ -1,6 +1,7 @@
 // POS.API/Controllers/BranchController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.Branch;
 
 namespace POS.API.Controllers
@@ -16,30 +17,32 @@ namespace POS.API.Controllers
             _mediator = mediator;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetList([FromQuery] BranchListQuery query, CancellationToken ct)
-        {
-            var result = await _mediator.Send(query, ct);
-            return Ok(result);
-        }
-
         [HttpGet("lookup")]
+        // [RequirePermission("branch:lookup")]
         public async Task<IActionResult> Lookup([FromQuery] BranchLookupListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/branch/5
+        [HttpGet]
+        [RequirePermission("branch:read")]
+        public async Task<IActionResult> GetList([FromQuery] BranchListQuery query, CancellationToken ct)
+        {
+            var result = await _mediator.Send(query, ct);
+            return Ok(result);
+        }
+
         [HttpGet("{id:int}")]
+        [RequirePermission("branch:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new BranchQuery { Id = id }, ct);
             return result.Success ? Ok(result) : NotFound(result);
         }
 
-        // POST api/branch
         [HttpPost]
+        [RequirePermission("branch:create")]
         public async Task<IActionResult> Create([FromBody] BranchCreateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);
@@ -48,11 +51,10 @@ namespace POS.API.Controllers
                 : BadRequest(result);
         }
 
-        // PUT api/branch/5
         [HttpPut("{id:int}")]
+        [RequirePermission("branch:update")]
         public async Task<IActionResult> Update(int id, [FromBody] BranchUpdateCommand command, CancellationToken ct)
         {
-            // ✅ Assign Id from route — body no longer needs an "id" field
             command = command with { Id = id };
 
             var result = await _mediator.Send(command, ct);
@@ -63,8 +65,8 @@ namespace POS.API.Controllers
             return Ok(result);
         }
 
-        // DELETE api/branch/5
         [HttpDelete("{id:int}")]
+        [RequirePermission("branch:delete")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new BranchDeleteCommand(id), ct);

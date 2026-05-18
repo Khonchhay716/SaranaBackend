@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.PointSetup;
 
 namespace POS.API.Controllers
@@ -14,17 +15,23 @@ namespace POS.API.Controllers
         {
             _mediator = mediator;
         }
+        [HttpGet("lookup")]
+        public async Task<IActionResult> GetLookUp(CancellationToken ct)
+        {
+            var result = await _mediator.Send(new PointSetupQuery(), ct);
+            return result.Success ? Ok(result) : NotFound(result);
+        }
 
-        // GET api/pointsetup
         [HttpGet]
+        [RequirePermission("point_setting:view")]
         public async Task<IActionResult> Get(CancellationToken ct)
         {
             var result = await _mediator.Send(new PointSetupQuery(), ct);
             return result.Success ? Ok(result) : NotFound(result);
         }
 
-        // PUT api/pointsetup
         [HttpPut]
+        [RequirePermission("point_setting:update")]
         public async Task<IActionResult> Update([FromBody] PointSetupUpdateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);

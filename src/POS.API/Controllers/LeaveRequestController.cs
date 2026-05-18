@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.Leave;
 
 namespace POS.API.Controllers
@@ -16,11 +17,13 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("my")]
+        [RequirePermission("leave_request:read_my")]
         public async Task<IActionResult> GetMyLeaves(
             [FromQuery] MyLeaveRequestListQuery query, CancellationToken ct)
             => Ok(await _mediator.Send(query, ct));
 
         [HttpGet]
+        [RequirePermission("leave_request:read_all")]
         public async Task<IActionResult> GetList(
             [FromQuery] LeaveRequestListQuery query, CancellationToken ct)
         {
@@ -29,6 +32,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [RequirePermission("leave_request:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new LeaveRequestQuery { Id = id }, ct);
@@ -36,6 +40,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPost]
+        [RequirePermission("leave_request:create")]
         public async Task<IActionResult> Submit(
             [FromBody] LeaveRequestSubmitCommand command, CancellationToken ct)
         {
@@ -46,6 +51,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPut("{id:int}/approve")]
+        [RequirePermission("leave_request:approve")]
         public async Task<IActionResult> Approve(
             int id, [FromBody] LeaveRequestApproveCommand command, CancellationToken ct)
         {
@@ -57,6 +63,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPut("{id:int}/reject")]
+        [RequirePermission("leave_request:reject")]
         public async Task<IActionResult> Reject(
             int id, [FromBody] LeaveRequestRejectCommand command, CancellationToken ct)
         {
@@ -68,6 +75,7 @@ namespace POS.API.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [RequirePermission("leave_request:cancel")]
         public async Task<IActionResult> Cancel(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new LeaveRequestCancelCommand(id), ct);

@@ -1,6 +1,7 @@
 // POS.API/Controllers/StaffController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.Staff;
 
 namespace POS.API.Controllers
@@ -16,32 +17,32 @@ namespace POS.API.Controllers
             _mediator = mediator;
         }
 
-        // GET api/staff
         [HttpGet]
+        [RequirePermission("staff:read")]
         public async Task<IActionResult> GetList([FromQuery] StaffListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/staff/lookup
         [HttpGet("lookup")]
+        // [RequirePermission("staff:lookup")]
         public async Task<IActionResult> Lookup([FromQuery] StaffLookupListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/staff/5
         [HttpGet("{id:int}")]
+        [RequirePermission("staff:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new StaffQuery { Id = id }, ct);
             return result.Success ? Ok(result) : NotFound(result);
         }
 
-        // POST api/staff
         [HttpPost]
+        [RequirePermission("staff:create")]
         public async Task<IActionResult> Create([FromBody] StaffCreateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);
@@ -50,8 +51,8 @@ namespace POS.API.Controllers
                 : BadRequest(result);
         }
 
-        // PUT api/staff/5
         [HttpPut("{id:int}")]
+        [RequirePermission("staff:update")]
         public async Task<IActionResult> Update(int id, [FromBody] StaffUpdateCommand command, CancellationToken ct)
         {
             command = command with { Id = id };
@@ -63,8 +64,8 @@ namespace POS.API.Controllers
             return Ok(result);
         }
 
-        // DELETE api/staff/5
         [HttpDelete("{id:int}")]
+        [RequirePermission("staff:delete")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new StaffDeleteCommand(id), ct);
@@ -72,6 +73,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("tree")]
+        [RequirePermission("staff:read")]
         public async Task<IActionResult> GetStaffTree()
         {
             var result = await _mediator.Send(new StaffTreeQuery());

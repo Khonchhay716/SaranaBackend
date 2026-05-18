@@ -19,7 +19,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet]
-        // [RequirePermission("order:read")]
+        [RequirePermission("order:read")]
         public async Task<ActionResult<PaginatedResult<OrderCreateResponse>>> GetOrders([FromQuery] OrderListQuery query)
         {
             var result = await _mediator.Send(query);
@@ -27,7 +27,7 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("{id}")]
-        // [RequirePermission("order:read")]
+        [RequirePermission("order:view")]
         public async Task<IActionResult> GetOrder(int id)
         {
             var query = new OrderQuery { Id = id };
@@ -36,7 +36,7 @@ namespace POS.API.Controllers
         }
 
         [HttpPost]
-        // [RequirePermission("order:create")]
+        [RequirePermission("order:create")]
         public async Task<IActionResult> CreateOrder([FromBody] OrderCreateCommand command)
         {
             var result = await _mediator.Send(command);
@@ -53,6 +53,7 @@ namespace POS.API.Controllers
 
 
         [HttpPost("{id:int}/refund")]
+        [RequirePermission("order:refound")]
         public async Task<IActionResult> Refund(int id, [FromBody] OrderRefundCommand command, CancellationToken ct)
         {
             command = command with { Id = id };

@@ -1,6 +1,7 @@
 // POS.API/Controllers/CustomerController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using POS.API.Attributes;
 using POS.Application.Features.Customer;
 
 namespace POS.API.Controllers
@@ -16,32 +17,32 @@ namespace POS.API.Controllers
             _mediator = mediator;
         }
 
-        // GET api/customer
         [HttpGet]
+        [RequirePermission("customer:read")]
         public async Task<IActionResult> GetList([FromQuery] CustomerListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/customer/lookup
         [HttpGet("lookup")]
+        // [RequirePermission("customer:lookup")]
         public async Task<IActionResult> Lookup([FromQuery] CustomerLookupListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // GET api/customer/5
         [HttpGet("{id:int}")]
+        [RequirePermission("customer:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new CustomerQuery { Id = id }, ct);
             return result.Success ? Ok(result) : NotFound(result);
         }
 
-        // POST api/customer
         [HttpPost]
+        [RequirePermission("customer:create")]
         public async Task<IActionResult> Create([FromBody] CustomerCreateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);
@@ -50,8 +51,8 @@ namespace POS.API.Controllers
                 : BadRequest(result);
         }
 
-        // PUT api/customer/5
         [HttpPut("{id:int}")]
+        [RequirePermission("customer:update")]
         public async Task<IActionResult> Update(int id, [FromBody] CustomerUpdateCommand command, CancellationToken ct)
         {
             command = command with { Id = id };
@@ -63,8 +64,8 @@ namespace POS.API.Controllers
             return Ok(result);
         }
 
-        // DELETE api/customer/5
         [HttpDelete("{id:int}")]
+        [RequirePermission("customer:delete")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new CustomerDeleteCommand(id), ct);

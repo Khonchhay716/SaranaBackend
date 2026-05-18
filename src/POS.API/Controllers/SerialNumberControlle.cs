@@ -19,25 +19,23 @@ namespace POS.API.Controllers
 
 
         [HttpGet]
-        [RequirePermission("product:read")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> GetList([FromQuery] SerialNumberListQuery query, CancellationToken ct)
         {
             var result = await _mediator.Send(query, ct);
             return Ok(result);
         }
 
-        // POST api/serial-number
         [HttpPost]
-        [RequirePermission("product:update")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> Create([FromBody] SerialNumberCreateCommand command, CancellationToken ct)
         {
             var result = await _mediator.Send(command, ct);
             return result.Success ? Ok(result) : BadRequest(result);
         }
 
-        // PUT api/serial-number/5
         [HttpPut("{id:int}")]
-        [RequirePermission("product:update")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> Update(int id, [FromBody] SerialNumberUpdateCommand command, CancellationToken ct)
         {
             command = command with { Id = id };
@@ -47,9 +45,8 @@ namespace POS.API.Controllers
             return Ok(result);
         }
 
-        // DELETE api/serial-number/5
         [HttpDelete("{id:int}")]
-        [RequirePermission("product:update")]
+        [RequirePermission("manage_stock:all")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
             var result = await _mediator.Send(new SerialNumberDeleteCommand(id), ct);
