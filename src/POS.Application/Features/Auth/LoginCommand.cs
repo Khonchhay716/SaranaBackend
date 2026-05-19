@@ -1,4 +1,3 @@
-// POS.Application/Features/Auth/LoginCommand.cs
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

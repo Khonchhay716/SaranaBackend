@@ -1,33 +1,25 @@
-// POS.Application/Features/Discount/DiscountCreateCommand.cs
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;
 using POS.Application.Common.Interfaces;
-using DomainDiscount        = POS.Domain.Entities.Discount;
+using DomainDiscount = POS.Domain.Entities.Discount;
 using DomainProductDiscount = POS.Domain.Entities.ProductDiscount;
 
 namespace POS.Application.Features.Discount
 {
     public record DiscountCreateCommand : IRequest<ApiResponse<DiscountInfo>>
     {
-        public string  Name            { get; set; } = string.Empty;
-        public string? Description     { get; set; }
-
-        /// <summary>"Percentage" | "FixedAmount"</summary>
-        public string  Type            { get; set; } = "Percentage";
-        public decimal Value           { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string Type { get; set; } = "Percentage";
+        public decimal Value { get; set; }
 
         public decimal? MinOrderAmount { get; set; }
         public DateTimeOffset? StartDate { get; set; }
-        public DateTimeOffset? EndDate   { get; set; }
-        public bool    IsActive        { get; set; } = true;
-
-        /// <summary>
-        /// Leave empty → Global (all products).
-        /// Provide IDs → Specific products only.
-        /// </summary>
-        public List<int> ProductIds    { get; set; } = new();
+        public DateTimeOffset? EndDate { get; set; }
+        public bool IsActive { get; set; } = true;
+        public List<int> ProductIds { get; set; } = new();
     }
 
     public class DiscountCreateCommandValidator : AbstractValidator<DiscountCreateCommand>
@@ -77,17 +69,16 @@ namespace POS.Application.Features.Discount
 
             var discount = new DomainDiscount
             {
-                Name           = request.Name,
-                Description    = request.Description,
-                Type           = request.Type,
-                Value          = request.Value,
+                Name = request.Name,
+                Description = request.Description,
+                Type = request.Type,
+                Value = request.Value,
                 MinOrderAmount = request.MinOrderAmount,
-                StartDate      = request.StartDate,
-                EndDate        = request.EndDate,
-                IsActive       = request.IsActive,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                IsActive = request.IsActive,
             };
 
-            // ✅ Attach specific products (if any — empty = global)
             foreach (var productId in request.ProductIds.Distinct())
             {
                 discount.ProductDiscounts.Add(new DomainProductDiscount
@@ -113,31 +104,31 @@ namespace POS.Application.Features.Discount
 
         internal static DiscountInfo MapToInfo(DomainDiscount d) => new()
         {
-            Id             = d.Id,
-            Name           = d.Name,
-            Description    = d.Description,
-            Type           = d.Type,
-            Value          = d.Value,
+            Id = d.Id,
+            Name = d.Name,
+            Description = d.Description,
+            Type = d.Type,
+            Value = d.Value,
             MinOrderAmount = d.MinOrderAmount,
-            StartDate      = d.StartDate,
-            EndDate        = d.EndDate,
-            IsActive       = d.IsActive,
-            IsGlobal       = !d.ProductDiscounts.Any(pd => !pd.IsDeleted),
-            IsDeleted      = d.IsDeleted,
-            CreatedDate    = d.CreatedDate,
-            CreatedBy      = d.CreatedBy,
-            UpdatedDate    = d.UpdatedDate,
-            UpdatedBy      = d.UpdatedBy,
+            StartDate = d.StartDate,
+            EndDate = d.EndDate,
+            IsActive = d.IsActive,
+            IsGlobal = !d.ProductDiscounts.Any(pd => !pd.IsDeleted),
+            IsDeleted = d.IsDeleted,
+            CreatedDate = d.CreatedDate,
+            CreatedBy = d.CreatedBy,
+            UpdatedDate = d.UpdatedDate,
+            UpdatedBy = d.UpdatedBy,
             Products = d.ProductDiscounts
                 .Where(pd => !pd.IsDeleted)
                 .Select(pd => new DiscountProductItem
                 {
                     ProductDiscountId = pd.Id,
-                    ProductId         = pd.ProductId,
-                    ProductName       = pd.Product?.Name ?? "",
-                    ProductSKU        = pd.Product?.SKU,
-                    ImageProduct      = pd.Product?.ImageProduct,
-                    Price             = pd.Product?.Price ?? 0,
+                    ProductId = pd.ProductId,
+                    ProductName = pd.Product?.Name ?? "",
+                    ProductSKU = pd.Product?.SKU,
+                    ImageProduct = pd.Product?.ImageProduct,
+                    Price = pd.Product?.Price ?? 0,
                 }).ToList(),
         };
     }

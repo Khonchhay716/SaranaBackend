@@ -11,20 +11,20 @@ namespace POS.Application.Features.Order
 {
     public enum TypeProduct
     {
-        Serial   = 1,
+        Serial = 1,
         NoSerial = 2,
     }
 
     public class OrderListQuery : PaginationRequest, IRequest<PaginatedResult<OrderListResponse>>
     {
-        public string?         Search        { get; set; }
-        public int?            CustomerId    { get; set; }
-        public int?            StaffId       { get; set; }
-        public OrderStatus?    Status        { get; set; }
-        public PaymentStatus?  PaymentStatus { get; set; }
-        public DateTimeOffset? FromDate      { get; set; }
-        public DateTimeOffset? ToDate        { get; set; }
-        public TypeProduct?    TypeProduct   { get; set; }
+        public string? Search { get; set; }
+        public int? CustomerId { get; set; }
+        public int? StaffId { get; set; }
+        public OrderStatus? Status { get; set; }
+        public PaymentStatus? PaymentStatus { get; set; }
+        public DateTimeOffset? FromDate { get; set; }
+        public DateTimeOffset? ToDate { get; set; }
+        public TypeProduct? TypeProduct { get; set; }
     }
 
     public class OrderListQueryValidator : AbstractValidator<OrderListQuery>
@@ -50,7 +50,7 @@ namespace POS.Application.Features.Order
         }
 
         public async Task<PaginatedResult<OrderListResponse>> Handle(
-            OrderListQuery    request,
+            OrderListQuery request,
             CancellationToken cancellationToken)
         {
             var query = _context.Orders
@@ -98,67 +98,67 @@ namespace POS.Application.Features.Order
             // ==================== Projection ====================
             var projectedQuery = query.Select(o => new OrderListResponse
             {
-                Id             = o.Id,
-                OrderNumber    = o.OrderNumber,
-                OrderDate      = o.OrderDate,
-                CustomerId     = o.CustomerId,
-                Staff          = o.Staff != null ? new TypeNamebase
+                Id = o.Id,
+                OrderNumber = o.OrderNumber,
+                OrderDate = o.OrderDate,
+                CustomerId = o.CustomerId,
+                Staff = o.Staff != null ? new TypeNamebase
                 {
-                    Id   = o.Staff.Id,
+                    Id = o.Staff.Id,
                     Name = o.Staff.Username
                 } : null,
-                SubTotal       = o.SubTotal,
+                SubTotal = o.SubTotal,
                 DiscountAmount = o.DiscountAmount,
-                TaxAmount      = o.TaxAmount,
-                TotalAmount    = o.TotalAmount,
+                TaxAmount = o.TaxAmount,
+                TotalAmount = o.TotalAmount,
 
                 // ==================== Point ====================
-                EarnedPoints   = o.EarnedPoints,  // ✅
-                PointsUsed     = o.PointsUsed,    // ✅
-                CashReceived   = o.CashReceived,  // ✅
+                EarnedPoints = o.EarnedPoints,
+                PointsUsed = o.PointsUsed,
+                CashReceived = o.CashReceived,
 
                 PaymentMethod = new TypeNamebase
                 {
-                    Id   = (int)(o.PaymentMethod ?? 0),
+                    Id = (int)(o.PaymentMethod ?? 0),
                     Name = o.PaymentMethod.HasValue ? o.PaymentMethod.ToString() : "N/A"
                 },
                 PaymentStatus = new TypeNamebase
                 {
-                    Id   = (int)o.PaymentStatus,
+                    Id = (int)o.PaymentStatus,
                     Name = o.PaymentStatus.ToString()
                 },
                 SaleType = new TypeNamebase
                 {
-                    Id   = (int)o.SaleType,
+                    Id = (int)o.SaleType,
                     Name = o.SaleType.ToString()
                 },
                 Status = new TypeNamebase
                 {
-                    Id   = (int)o.Status,
+                    Id = (int)o.Status,
                     Name = o.Status.ToString()
                 },
-                Notes      = o.Notes,
+                Notes = o.Notes,
                 OrderItems = o.OrderItems
                     .Where(oi => !oi.IsDeleted)
                     .Select(oi => new OrderItemInfo
                     {
-                        Id                = oi.Id,
-                        OrderId           = oi.OrderId,
-                        ProductId         = oi.ProductId,
-                        ProductName       = oi.Product.Name,
-                        ImageProduct      = oi.ImageProduct ?? "",
-                        SerialNumberId    = oi.SerialNumberId,
-                        SerialNo          = oi.SerialNumber != null ? new TypeNamebase
+                        Id = oi.Id,
+                        OrderId = oi.OrderId,
+                        ProductId = oi.ProductId,
+                        ProductName = oi.Product.Name,
+                        ImageProduct = oi.ImageProduct ?? "",
+                        SerialNumberId = oi.SerialNumberId,
+                        SerialNo = oi.SerialNumber != null ? new TypeNamebase
                         {
-                            Id   = oi.SerialNumber.Id,
+                            Id = oi.SerialNumber.Id,
                             Name = oi.SerialNumber.SerialNo ?? "N/A"
                         } : null,
-                        Quantity          = oi.Quantity,
-                        UnitPrice         = oi.UnitPrice,
-                        SubTotal          = oi.SubTotal,
-                        WarrantyMonths    = oi.WarrantyMonths,
+                        Quantity = oi.Quantity,
+                        UnitPrice = oi.UnitPrice,
+                        SubTotal = oi.SubTotal,
+                        WarrantyMonths = oi.WarrantyMonths,
                         WarrantyStartDate = oi.WarrantyStartDate,
-                        WarrantyEndDate   = oi.WarrantyEndDate,
+                        WarrantyEndDate = oi.WarrantyEndDate,
                     }).ToList()
             });
 

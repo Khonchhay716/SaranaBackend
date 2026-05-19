@@ -40,13 +40,13 @@ namespace POS.Application.Features.Leave
             MyLeaveRequestListQuery request,
             CancellationToken cancellationToken)
         {
-            // ✅ Get current StaffId from Person
+            // Get current StaffId from Person
             var userId = _currentUser.UserId;
             var person = await _context.Persons
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted, cancellationToken);
 
-            // ✅ Use -1 if no staff → query returns empty → ToPaginatedResultAsync correct
+            // Use -1 if no staff → query returns empty → ToPaginatedResultAsync correct
             var staffId = person?.StaffId ?? -1;
 
             var query = _context.LeaveRequests

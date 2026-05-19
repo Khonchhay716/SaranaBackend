@@ -30,13 +30,12 @@ namespace POS.Application.Features.Leave
             LeaveRequestApproveCommand request,
             CancellationToken cancellationToken)
         {
-            // ✅ Get userId from token
             var userId = _currentUser.UserId;
             if (userId == null)
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     "Unauthorized. Please login again.");
 
-            // ✅ Get StaffId from Person
+            // Get StaffId from Person
             var person = await _context.Persons
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == userId.Value && !x.IsDeleted, cancellationToken);
@@ -64,7 +63,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     $"Cannot approve a request with status '{entity.Status}'.");
 
-            // ✅ Check chain — B and A both can approve C's request
+            // Check chain — B and A both can approve C's request
             var isInChain = await IsInApprovalChainAsync(
                 entity.StaffId,
                 currentStaffId,
@@ -74,13 +73,13 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     "You are not authorized to approve this request.");
 
-            entity.Status       = "Approved";
-            entity.ApproverId   = currentStaffId;
+            entity.Status = "Approved";
+            entity.ApproverId = currentStaffId;
             entity.ApprovedDate = DateTimeOffset.UtcNow;
             entity.ApprovalNote = request.ApprovalNote;
-            entity.UpdatedDate  = DateTimeOffset.UtcNow;
+            entity.UpdatedDate = DateTimeOffset.UtcNow;
 
-            // ✅ Update or create leave balance
+            // Update or create leave balance
             var balance = await _context.LeaveBalances
                 .FirstOrDefaultAsync(x => x.StaffId == entity.StaffId
                     && x.LeaveTypeId == entity.LeaveTypeId
@@ -89,27 +88,27 @@ namespace POS.Application.Features.Leave
 
             if (balance != null)
             {
-                // ✅ decimal + decimal — no type mismatch
-                balance.UsedDays   += entity.TotalDays;
+                // decimal + decimal — no type mismatch
+                balance.UsedDays += entity.TotalDays;
                 balance.UpdatedDate = DateTimeOffset.UtcNow;
             }
             else
             {
-                // ✅ Auto create balance
+                // Auto create balance
                 _context.LeaveBalances.Add(new Domain.Entities.LeaveBalance
                 {
-                    StaffId     = entity.StaffId,
+                    StaffId = entity.StaffId,
                     LeaveTypeId = entity.LeaveTypeId,
-                    Year        = entity.StartDate.Year,
-                    TotalDays   = entity.LeaveType.MaxDaysPerYear, // max from leave type
-                    UsedDays    = entity.TotalDays,                // ✅ decimal
+                    Year = entity.StartDate.Year,
+                    TotalDays = entity.LeaveType.MaxDaysPerYear,
+                    UsedDays = entity.TotalDays,
                     CreatedDate = DateTimeOffset.UtcNow,
                 });
             }
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            // ✅ Reload with Approver after save
+            //  Reload with Approver after save
             var updated = await _context.LeaveRequests
                 .Include(x => x.Staff)
                 .Include(x => x.LeaveType)
@@ -127,7 +126,7 @@ namespace POS.Application.Features.Leave
             int approverId,
             CancellationToken cancellationToken)
         {
-            var visited   = new HashSet<int>();
+            var visited = new HashSet<int>();
             var currentId = (int?)staffId;
 
             while (currentId.HasValue)

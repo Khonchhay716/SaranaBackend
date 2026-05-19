@@ -18,7 +18,7 @@ namespace EmailApp.Controllers
             _verificationService = verificationService;
         }
 
-        // 1️⃣ Send verification code (first time)
+        // Send verification code (first time)
         [HttpPost("send-verification")]
         [AllowAnonymous]
         public async Task<IActionResult> SendVerificationCode([FromBody] SendVerificationCodeRequest request)
@@ -75,7 +75,7 @@ namespace EmailApp.Controllers
             }
         }
 
-        // 2️⃣ Resend verification code
+        // Resend verification code
         [HttpPost("resend-verification")]
         [AllowAnonymous]
         public async Task<IActionResult> ResendVerificationCode([FromBody] SendVerificationCodeRequest request)
@@ -127,7 +127,7 @@ namespace EmailApp.Controllers
             }
         }
 
-        // 3️⃣ Verify the code
+        // Verify the code
         [HttpPost("verify-code")]
         [AllowAnonymous]
         public IActionResult VerifyCode([FromBody] VerifyCodeRequest request)
@@ -172,7 +172,7 @@ namespace EmailApp.Controllers
             }
         }
 
-        // 4️⃣ Check remaining time
+        // Check remaining time
         [HttpGet("check-time/{email}")]
         [AllowAnonymous]
         public IActionResult CheckRemainingTime(string email)

@@ -33,7 +33,7 @@ namespace POS.Application.Features.Leave
         {
             var query = _context.LeaveTypes
                 .AsNoTracking()
-                .Where(x => !x.IsDeleted && x.IsActive); // ✅ active only for lookup
+                .Where(x => !x.IsDeleted && x.IsActive);
 
             if (!string.IsNullOrWhiteSpace(request.Search))
                 query = query.Where(x => x.Name.ToLower().Contains(request.Search.ToLower()));
@@ -42,8 +42,8 @@ namespace POS.Application.Features.Leave
 
             var projected = query.Select(x => new LeaveTypeInfoLookup
             {
-                Id             = x.Id,
-                Name           = x.Name,
+                Id = x.Id,
+                Name = x.Name,
                 MaxDaysPerYear = x.MaxDaysPerYear,
             });
 

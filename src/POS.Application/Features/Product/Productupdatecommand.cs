@@ -18,7 +18,7 @@ namespace POS.Application.Features.Product
         public string? Barcode { get; set; }
         public decimal Price { get; set; }
         public decimal? CostPrice { get; set; }
-        public decimal TaxRate { get; set; } = 0;   // ✅ Added (0–100)
+        public decimal TaxRate { get; set; } = 0;
         public int? CategoryId { get; set; }
         public string? ImageProduct { get; set; }
         public bool IsSerialNumber { get; set; }
@@ -35,7 +35,7 @@ namespace POS.Application.Features.Product
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.Price).GreaterThanOrEqualTo(0);
             RuleFor(x => x.MinStock).GreaterThanOrEqualTo(0);
-            RuleFor(x => x.TaxRate)                                             // ✅ Validate TaxRate
+            RuleFor(x => x.TaxRate)  
                 .InclusiveBetween(0, 100).WithMessage("TaxRate must be between 0 and 100.");
         }
     }
@@ -51,14 +51,14 @@ namespace POS.Application.Features.Product
 
         public async Task<ApiResponse<ProductInfo>> Handle(ProductUpdateCommand request, CancellationToken cancellationToken)
         {
-            // 1. Fetch product
+            // Fetch product
             var product = await _context.Products
                 .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
             if (product == null)
                 return ApiResponse<ProductInfo>.NotFound($"Product {request.Id} not found");
 
-            // 2. Validate
+            // Validate
             var validator = new ProductUpdateCommandValidator();
             var validationResult = validator.Validate(request);
             if (!validationResult.IsValid)
@@ -67,7 +67,7 @@ namespace POS.Application.Features.Product
                 return ApiResponse<ProductInfo>.BadRequest(errors);
             }
 
-            // 3. ✅ Check Barcode uniqueness (exclude current product)
+            // Check Barcode uniqueness (exclude current product)
             if (!string.IsNullOrWhiteSpace(request.Barcode))
             {
                 var barcodeExists = await _context.Products
@@ -78,7 +78,7 @@ namespace POS.Application.Features.Product
                     return ApiResponse<ProductInfo>.BadRequest($"Barcode '{request.Barcode}' is already in use.");
             }
 
-            // 4. Validate Category
+            // Validate Category
             if (request.CategoryId.HasValue)
             {
                 var categoryExists = await _context.Categories
@@ -87,7 +87,7 @@ namespace POS.Application.Features.Product
                     return ApiResponse<ProductInfo>.BadRequest("Invalid Category");
             }
 
-            // 5. Validate Branch
+            // Validate Branch
             if (request.BranchId.HasValue)
             {
                 var branchExists = await _context.Branches
@@ -96,14 +96,14 @@ namespace POS.Application.Features.Product
                     return ApiResponse<ProductInfo>.BadRequest("Invalid Branch");
             }
 
-            // 6. Update fields
+            // Update fields
             product.Name           = request.Name;
             product.Description    = request.Description;
             product.SKU            = request.SKU;
             product.Barcode        = request.Barcode;
             product.Price          = request.Price;
             product.CostPrice      = request.CostPrice;
-            product.TaxRate        = request.TaxRate;       // ✅ Mapped
+            product.TaxRate        = request.TaxRate; 
             product.CategoryId     = request.CategoryId;
             product.ImageProduct   = request.ImageProduct;
             product.IsSerialNumber = request.IsSerialNumber;

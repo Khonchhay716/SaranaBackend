@@ -57,11 +57,11 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveTypeInfo>.BadRequest(
                     $"Leave type '{request.Name}' already exists.");
 
-            entity.Name           = request.Name.Trim();
+            entity.Name = request.Name.Trim();
             entity.MaxDaysPerYear = request.MaxDaysPerYear;
-            entity.Description    = request.Description.Trim();
-            entity.IsActive       = request.IsActive;
-            entity.UpdatedDate    = DateTimeOffset.UtcNow;
+            entity.Description = request.Description.Trim();
+            entity.IsActive = request.IsActive;
+            entity.UpdatedDate = DateTimeOffset.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
 

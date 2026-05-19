@@ -29,7 +29,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "POS System",
         Version = "1.0",
-        Description = "Library System API Documentation"
+        Description = "Sokha SK System API Documentation"
     });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -175,12 +175,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Create Uploads folder
+// Create Uploads folder with image 
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 if (!Directory.Exists(uploadsPath))
 {
     Directory.CreateDirectory(uploadsPath);
-    Console.WriteLine($"✓ Created Uploads directory: {uploadsPath}");
+    Console.WriteLine($"Created Uploads directory: {uploadsPath}");
 }
 
 app.UseStaticFiles(new StaticFileOptions

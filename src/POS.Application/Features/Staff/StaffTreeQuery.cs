@@ -32,35 +32,30 @@ namespace POS.Application.Features.Staff
             StaffTreeQuery request,
             CancellationToken cancellationToken)
         {
-            // ✅ Load all staff at once — avoid N+1
             var allStaff = await _context.Staffs
                 .AsNoTracking()
                 .Include(s => s.Person)
                 .Where(s => !s.IsDeleted)
                 .Select(s => new StaffTreeNode
                 {
-                    Id           = s.Id,
-                    FullName     = s.FirstName + " " + s.LastName,
-                    Position     = s.Position,
+                    Id = s.Id,
+                    FullName = s.FirstName + " " + s.LastName,
+                    Position = s.Position,
                     ImageProfile = s.ImageProfile,
-                    Status       = s.Status,
+                    Status = s.Status,
                     SupervisorId = s.SupervisorId,
                     User = s.Person != null && !s.Person.IsDeleted
                         ? new LinkedUserInfo
                         {
-                            Id       = s.Person.Id,
+                            Id = s.Person.Id,
                             Username = s.Person.Username,
-                            Email    = s.Person.Email,
+                            Email = s.Person.Email,
                             IsActive = s.Person.IsActive
                         }
                         : null
                 })
                 .ToListAsync(cancellationToken);
-
-            // ✅ Build lookup dictionary by Id
             var lookup = allStaff.ToDictionary(s => s.Id);
-
-            // ✅ Build tree — attach each node to its parent
             var roots = new List<StaffTreeNode>();
 
             foreach (var node in allStaff)
@@ -71,7 +66,6 @@ namespace POS.Application.Features.Staff
                 }
                 else
                 {
-                    // No supervisor or supervisor not found — this is a root
                     roots.Add(node);
                 }
             }

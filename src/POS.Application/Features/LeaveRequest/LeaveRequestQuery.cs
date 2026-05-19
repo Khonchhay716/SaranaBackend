@@ -45,7 +45,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.NotFound(
                     $"Leave request with ID {request.Id} not found.");
 
-            // ✅ Use static MapToInfo from LeaveRequestSubmitCommandHandler
+            // Use static MapToInfo from LeaveRequestSubmitCommandHandler
             return ApiResponse<LeaveRequestInfo>.Ok(
                 MapToInfo(entity),
                 "Leave request retrieved successfully.");

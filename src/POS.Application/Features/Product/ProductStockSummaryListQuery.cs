@@ -5,14 +5,11 @@ using POS.Application.Common.Interfaces;
 
 namespace POS.Application.Features.Product
 {
-    // QUERY
     public class ProductStockTotalSummaryQuery : IRequest<ApiResponse<ProductStockTotalSummaryInfo>>
     {
         public DateTime? StartDate { get; set; }
         public DateTime? EndDate { get; set; }
     }
-
-    // RESPONSE
     public class ProductStockTotalSummaryInfo
     {
         public int TotalStockSerial { get; set; }
@@ -22,8 +19,6 @@ namespace POS.Application.Features.Product
         public decimal TotalCostMovement { get; set; }
         public decimal TotalCostAll { get; set; }
     }
-
-    // HANDLER
     public class ProductStockTotalSummaryQueryHandler
         : IRequestHandler<ProductStockTotalSummaryQuery, ApiResponse<ProductStockTotalSummaryInfo>>
     {
@@ -58,7 +53,6 @@ namespace POS.Application.Features.Product
             if (end.HasValue)
                 serialQuery = serialQuery.Where(s => s.CreatedDate < end.Value);
 
-            // ✅ GroupBy(1) + CASE WHEN = Single SQL query
             var serialStats = await serialQuery
                 .GroupBy(x => 1)
                 .Select(g => new
@@ -79,7 +73,6 @@ namespace POS.Application.Features.Product
             if (end.HasValue)
                 movementsQuery = movementsQuery.Where(sm => sm.CreatedDate < end.Value);
 
-            // ✅ GroupBy(1) + ternary CASE WHEN = Single SQL query
             var movementStats = await movementsQuery
                 .GroupBy(sm => 1)
                 .Select(g => new
@@ -93,19 +86,16 @@ namespace POS.Application.Features.Product
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
-            // Combine Result
             var info = new ProductStockTotalSummaryInfo
             {
                 // Serial
                 TotalStockSerial = serialStats?.TotalStock ?? 0,
                 TotalCostSerial  = serialStats?.TotalCost ?? 0,
-
                 // Movement (StockIn - StockOut)
                 TotalStockMovement = (movementStats?.StockIn ?? 0)
                                    - (movementStats?.StockOut ?? 0),
                 TotalCostMovement  = (movementStats?.TotalCostIn ?? 0)
                                    - (movementStats?.TotalCostOut ?? 0),
-
                 // All = Serial + Movement
                 TotalStockAll = (serialStats?.TotalStock ?? 0)
                               + ((movementStats?.StockIn ?? 0) - (movementStats?.StockOut ?? 0)),

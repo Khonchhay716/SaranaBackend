@@ -32,7 +32,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<bool>.BadRequest(
                     "Cannot delete leave type that has existing leave requests.");
 
-            entity.IsDeleted   = true;
+            entity.IsDeleted = true;
             entity.DeletedDate = DateTimeOffset.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);

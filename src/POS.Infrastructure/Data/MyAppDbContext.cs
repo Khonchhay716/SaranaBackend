@@ -23,7 +23,6 @@ namespace POS.Infrastructure.Data
         public DbSet<PersonRole> PersonRoles { get; set; } = null!;
         public DbSet<RolePermission> RolePermissions { get; set; } = null!;
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
-
         public DbSet<Category> Categories { get; set; } = null!;
         public DbSet<Branch> Branches { get; set; } = null!;
         public DbSet<Product> Products { get; set; } = null!;
@@ -65,7 +64,6 @@ namespace POS.Infrastructure.Data
         {
             var utcNow = DateTimeOffset.UtcNow;
 
-            // Handle entities that implement IHasTimestamps (if you still have any)
             foreach (var entry in ChangeTracker.Entries<IHasTimestamps>())
             {
                 if (entry.State == EntityState.Added)
@@ -79,29 +77,21 @@ namespace POS.Infrastructure.Data
                 }
             }
 
-            // ADDED: Handle entities that inherit from BaseAuditableEntity
             foreach (var entry in ChangeTracker.Entries<BaseAuditableEntity>())
             {
                 if (entry.State == EntityState.Added)
                 {
                     entry.Entity.CreatedDate = utcNow;
-                    // You can set CreatedBy here if you have access to current user context
-                    // entry.Entity.CreatedBy = _currentUserService.UserId;
                 }
                 else if (entry.State == EntityState.Modified)
                 {
                     entry.Entity.UpdatedDate = utcNow;
-                    // You can set UpdatedBy here if you have access to current user context
-                    // entry.Entity.UpdatedBy = _currentUserService.UserId;
                 }
                 else if (entry.State == EntityState.Deleted)
                 {
-                    // Implement soft delete
                     entry.State = EntityState.Modified;
                     entry.Entity.IsDeleted = true;
                     entry.Entity.DeletedDate = utcNow;
-                    // You can set DeletedBy here if you have access to current user context
-                    // entry.Entity.DeletedBy = _currentUserService.UserId;
                 }
             }
         }
@@ -113,18 +103,6 @@ namespace POS.Infrastructure.Data
             builder.HasDefaultSchema("pos");
 
             // ---------------- PERSON ----------------
-            // builder.Entity<Person>(entity =>
-            // {
-            //     entity.ToTable("persons");
-            //     entity.HasKey(x => x.Id);
-            //     entity.Property(x => x.FirstName).HasMaxLength(50).IsRequired();
-            //     entity.Property(x => x.LastName).HasMaxLength(50).IsRequired();
-            //     entity.Property(x => x.Username).HasMaxLength(50).IsRequired();
-            //     entity.Property(x => x.Email).HasMaxLength(100).IsRequired();
-            //     entity.Property(x => x.IsActive).HasDefaultValue(true);
-            // });
-
-
             builder.Entity<Person>(entity =>
            {
                entity.ToTable("persons");
@@ -172,7 +150,6 @@ namespace POS.Infrastructure.Data
                 entity.Property(x => x.ImageProfile).HasMaxLength(500);
             });
 
-            // ---------------- ROLE ----------------
             builder.Entity<Role>(entity =>
             {
                 entity.ToTable("roles");
@@ -182,7 +159,6 @@ namespace POS.Infrastructure.Data
                 entity.HasIndex(x => x.Name).IsUnique();
             });
 
-            // ---------------- PERMISSION ----------------
             builder.Entity<Permission>(entity =>
             {
                 entity.ToTable("permissions");
@@ -192,7 +168,6 @@ namespace POS.Infrastructure.Data
                 entity.HasIndex(x => x.Name).IsUnique();
             });
 
-            // ---------------- ROLE_PERMISSION ----------------
             builder.Entity<RolePermission>(entity =>
             {
                 entity.ToTable("role_permissions");
@@ -208,7 +183,6 @@ namespace POS.Infrastructure.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ---------------- PERSON_ROLE ----------------
             builder.Entity<PersonRole>(entity =>
             {
                 entity.ToTable("person_roles");
@@ -221,7 +195,6 @@ namespace POS.Infrastructure.Data
                       .HasForeignKey(x => x.RoleId);
             });
 
-            // ---------------- REFRESH TOKEN ----------------
             builder.Entity<RefreshToken>(entity =>
             {
                 entity.ToTable("refresh_tokens");
@@ -233,7 +206,6 @@ namespace POS.Infrastructure.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ---------------- CATEGORY ----------------
             builder.Entity<Category>(entity =>
             {
                 entity.ToTable("categories");
@@ -273,7 +245,6 @@ namespace POS.Infrastructure.Data
                     .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // ---------------- PRODUCT ----------------
             builder.Entity<Product>(entity =>
             {
                 entity.ToTable("products");
@@ -293,7 +264,6 @@ namespace POS.Infrastructure.Data
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // ---------------- SERIAL NUMBER ----------------
             builder.Entity<SerialNumber>(entity =>
             {
                 entity.ToTable("serial_numbers");
@@ -426,7 +396,6 @@ namespace POS.Infrastructure.Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // ---------------- LEAVE TYPE ----------------
             builder.Entity<LeaveType>(entity =>
             {
                 entity.ToTable("leave_types");
@@ -446,8 +415,7 @@ namespace POS.Infrastructure.Data
                       .IsUnique()
                       .HasFilter("\"IsDeleted\" = false");
             });
-
-            // ---------------- LEAVE REQUEST ----------------
+            
             builder.Entity<LeaveRequest>(entity =>
             {
                 entity.ToTable("leave_requests");
@@ -491,7 +459,6 @@ namespace POS.Infrastructure.Data
                 entity.HasIndex(x => x.StartDate);
             });
 
-            // ---------------- LEAVE BALANCE ----------------
             builder.Entity<LeaveBalance>(entity =>
             {
                 entity.ToTable("leave_balances");
@@ -519,6 +486,7 @@ namespace POS.Infrastructure.Data
                       .IsUnique()
                       .HasFilter("\"IsDeleted\" = false");
             });
+            
             builder.Entity<PointSetup>(entity =>
             {
                 entity.ToTable("point_setups");

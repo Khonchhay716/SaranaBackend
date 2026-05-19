@@ -1,4 +1,3 @@
-// POS.Application/Features/SerialNumber/SerialNumberListQuery.cs
 using FluentValidation;
 using MediatR;
 using POS.Application.Common.Dto;
@@ -17,9 +16,9 @@ namespace POS.Application.Features.SerialNumber
 
     public class SerialNumberListQuery : PaginationRequest, IRequest<PaginatedResult<SerialNumberInfo>>
     {
-        public int? ProductId { get; set; }   // optional — null = all products
+        public int? ProductId { get; set; }
         public string? Search { get; set; }
-        public SerialNumberStatus? Status { get; set; }   // 1=Available, 2=Sold, null=all
+        public SerialNumberStatus? Status { get; set; } 
         public DateTimeOffset? FromDate { get; set; }
         public DateTimeOffset? ToDate { get; set; }
     }
@@ -28,13 +27,11 @@ namespace POS.Application.Features.SerialNumber
     {
         public SerialNumberListQueryValidator()
         {
-            // ProductId is optional, but if provided must be > 0
             RuleFor(x => x.ProductId)
                 .GreaterThan(0)
                 .When(x => x.ProductId.HasValue)
                 .WithMessage("ProductId must be greater than 0 when provided.");
 
-            // Status if provided must be a valid enum value (1 or 2)
             RuleFor(x => x.Status)
                 .IsInEnum()
                 .When(x => x.Status.HasValue)
@@ -60,14 +57,9 @@ namespace POS.Application.Features.SerialNumber
         {
             IQueryable<Domain.Entities.SerialNumber> query = _context.SerialNumbers
                 .Where(s => !s.IsDeleted);
-
-            // ── Filters ──────────────────────────────────────────────────────
-
-            // ProductId — optional, skip if not provided
             if (request.ProductId.HasValue)
                 query = query.Where(s => s.ProductId == request.ProductId.Value);
 
-            // Search — partial match on serial number string
             if (!string.IsNullOrWhiteSpace(request.Search))
                 query = query.Where(s => s.SerialNo.Contains(request.Search));
 
@@ -84,18 +76,12 @@ namespace POS.Application.Features.SerialNumber
                 if (statusString is not null)
                     query = query.Where(s => s.Status == statusString);
             }
-
-            // Date range
             if (request.FromDate.HasValue)
                 query = query.Where(s => s.CreatedDate >= request.FromDate.Value);
 
             if (request.ToDate.HasValue)
                 query = query.Where(s => s.CreatedDate <= request.ToDate.Value);
-
-            // ── Sort ─────────────────────────────────────────────────────────
             query = query.OrderByDescending(s => s.CreatedDate);
-
-            // ── Project & paginate ───────────────────────────────────────────
             var projected = query.Select(s => new SerialNumberInfo
             {
                 Id = s.Id,

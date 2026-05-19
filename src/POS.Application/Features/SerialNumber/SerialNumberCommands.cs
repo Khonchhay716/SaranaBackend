@@ -1,4 +1,3 @@
-// POS.Application/Features/SerialNumber/SerialNumberCommands.cs
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -23,8 +22,6 @@ namespace POS.Application.Features.SerialNumber
         };
     }
 
-
-    // ── CREATE ──────────────────────────────────────────────────────────────
     public record SerialNumberCreateCommand : IRequest<ApiResponse<SerialNumberInfo>>
     {
         public int ProductId { get; set; }
@@ -66,7 +63,6 @@ namespace POS.Application.Features.SerialNumber
             if (!product.IsSerialNumber)
                 return ApiResponse<SerialNumberInfo>.BadRequest("Product is not a serialized product");
 
-            // ✅ GLOBAL unique check — SerialNo must be unique across the whole table
             var duplicate = await _context.SerialNumbers
                 .AnyAsync(s => s.SerialNo == request.SerialNo && !s.IsDeleted, cancellationToken);
 
@@ -95,7 +91,6 @@ namespace POS.Application.Features.SerialNumber
     }
 
 
-    // ── UPDATE ──────────────────────────────────────────────────────────────
     public record SerialNumberUpdateCommand : IRequest<ApiResponse<SerialNumberInfo>>
     {
         [System.Text.Json.Serialization.JsonIgnore]
@@ -139,7 +134,6 @@ namespace POS.Application.Features.SerialNumber
             if (sn == null)
                 return ApiResponse<SerialNumberInfo>.NotFound($"Serial number with id {request.Id} not found");
 
-            // ✅ GLOBAL unique check — exclude current row by Id only
             var duplicate = await _context.SerialNumbers
                 .AnyAsync(s => s.SerialNo == request.SerialNo
                             && s.Id != request.Id
@@ -164,7 +158,6 @@ namespace POS.Application.Features.SerialNumber
     }
 
 
-    // ── DELETE ──────────────────────────────────────────────────────────────
     public record SerialNumberDeleteCommand(int Id) : IRequest<ApiResponse<bool>>;
 
     public class SerialNumberDeleteCommandHandler : IRequestHandler<SerialNumberDeleteCommand, ApiResponse<bool>>

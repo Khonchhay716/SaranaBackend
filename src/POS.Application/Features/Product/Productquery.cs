@@ -25,8 +25,6 @@ namespace POS.Application.Features.Product
             var product = await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Branch)
-                // ✅ No SerialNumbers — use GET /product/{id}/serial-numbers
-                // ✅ No StockMovements — use GET /product/{id}/stock-movements
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => !x.IsDeleted && x.Id == request.Id, cancellationToken);
 

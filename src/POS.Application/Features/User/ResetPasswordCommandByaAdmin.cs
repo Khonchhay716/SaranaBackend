@@ -12,24 +12,18 @@ namespace POS.Application.Features.User
 {
     public record ResetPasswordCommand : IRequest<ApiResponse>
     {
-        public int    UserId          { get; set; }
-        public string NewPassword     { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public string NewPassword { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Validator
-    // ─────────────────────────────────────────────────────────────────────────
     public class ResetPasswordCommandValidator : AbstractValidator<ResetPasswordCommand>
     {
         public ResetPasswordCommandValidator()
         {
-            // ── UserId ────────────────────────────────────────────────────────
             RuleFor(x => x.UserId)
                 .GreaterThan(0)
                     .WithMessage("A valid User ID is required.");
 
-            // ── New Password ──────────────────────────────────────────────────
             RuleFor(x => x.NewPassword)
                 .NotEmpty()
                     .WithMessage("New password is required.")
@@ -44,32 +38,28 @@ namespace POS.Application.Features.User
                 .Matches(@"[!@#$%^&*]")
                     .WithMessage("New password must contain at least one special character (!@#$%^&*).");
 
-            // ── Confirm Password ──────────────────────────────────────────────
             RuleFor(x => x.ConfirmPassword)
                 .NotEmpty()
                     .WithMessage("Confirm password is required.")
-                // ✅ Must() for cross-property comparison
                 .Must((cmd, confirmPwd) => confirmPwd == cmd.NewPassword)
                     .WithMessage("Confirm password does not match the new password.");
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Handler
-    // ─────────────────────────────────────────────────────────────────────────
+
     public class ResetPasswordCommandHandler : IRequestHandler<ResetPasswordCommand, ApiResponse>
     {
-        private readonly IMyAppDbContext     _context;
-        private readonly IPasswordHasher     _passwordHasher;
+        private readonly IMyAppDbContext _context;
+        private readonly IPasswordHasher _passwordHasher;
         private readonly ICurrentUserService _currentUserService;
 
         public ResetPasswordCommandHandler(
-            IMyAppDbContext     context,
-            IPasswordHasher     passwordHasher,
+            IMyAppDbContext context,
+            IPasswordHasher passwordHasher,
             ICurrentUserService currentUserService)
         {
-            _context            = context;
-            _passwordHasher     = passwordHasher;
+            _context = context;
+            _passwordHasher = passwordHasher;
             _currentUserService = currentUserService;
         }
 

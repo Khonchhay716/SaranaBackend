@@ -1,4 +1,3 @@
-// POS.Application/Features/Branch/BranchQuery.cs
 using FluentValidation;
 using Mapster;
 using MediatR;
@@ -10,9 +9,6 @@ using POS.Application.Common.Typebase;
 
 namespace POS.Application.Features.Branch
 {
-    // ─────────────────────────────────────────────────────────
-    // Single Branch
-    // ─────────────────────────────────────────────────────────
     public class BranchQuery : IRequest<ApiResponse<BranchInfo>>
     {
         public int Id { get; set; }
@@ -42,9 +38,6 @@ namespace POS.Application.Features.Branch
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Paginated List
-    // ─────────────────────────────────────────────────────────
     public class BranchListQuery : PaginationRequest, IRequest<PaginatedResult<BranchInfo>>
     {
         public string? Search { get; set; }

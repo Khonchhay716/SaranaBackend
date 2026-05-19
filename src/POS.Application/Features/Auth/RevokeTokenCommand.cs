@@ -1,4 +1,3 @@
-// POS.Application/Features/Auth/RevokeTokenCommand.cs
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

@@ -1,4 +1,3 @@
-// POS.Application/Features/Category/CategoryLookupQuery.cs
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;
@@ -12,14 +11,12 @@ using System.Threading.Tasks;
 namespace POS.Application.Features.Category
 {
 
-    // Query Request
     public class CategoryLookupListQuery : PaginationRequest, IRequest<PaginatedResult<CategoryInfo>>
     {
         public string? Search { get; set; }
         public bool? IsActive { get; set; }
     }
 
-    // Query Handler
     public class CategoryLookupListQueryHandler : IRequestHandler<CategoryLookupListQuery, PaginatedResult<CategoryInfo>>
     {
         private readonly IMyAppDbContext _context;

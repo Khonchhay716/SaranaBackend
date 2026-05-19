@@ -11,8 +11,8 @@ namespace POS.Domain.Entities
         public virtual LeaveType LeaveType { get; set; } = null!;
 
         public int Year { get; set; }
-        public decimal  TotalDays { get; set; }
-        public decimal  UsedDays { get; set; }
-        public decimal  RemainingDays => TotalDays - UsedDays;
+        public decimal TotalDays { get; set; }
+        public decimal UsedDays { get; set; }
+        public decimal RemainingDays => TotalDays - UsedDays;
     }
 }

@@ -24,12 +24,12 @@ namespace POS.Application.Features.Leave
             LeaveRequestCancelCommand request,
             CancellationToken cancellationToken)
         {
-            // ✅ Get userId from token
+            // Get userId from token
             var userId = _currentUser.UserId;
             if (userId == null)
                 return ApiResponse<bool>.BadRequest("Unauthorized. Please login again.");
 
-            // ✅ Get StaffId from Person
+            // Get StaffId from Person
             var person = await _context.Persons
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == userId.Value && !x.IsDeleted, cancellationToken);
@@ -48,7 +48,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<bool>.NotFound(
                     $"Leave request with ID {request.Id} not found.");
 
-            // ✅ Only owner can cancel
+            // Only owner can cancel
             if (entity.StaffId != person.StaffId.Value)
                 return ApiResponse<bool>.BadRequest(
                     "You can only cancel your own leave request.");
@@ -57,7 +57,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<bool>.BadRequest(
                     "Only pending requests can be cancelled.");
 
-            entity.IsDeleted   = true;
+            entity.IsDeleted = true;
             entity.DeletedDate = DateTimeOffset.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);

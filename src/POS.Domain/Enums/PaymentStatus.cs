@@ -10,6 +10,6 @@ namespace POS.Domain.Enums
     {
         Pending = 1,
         Paid = 2,
-        Refunded = 3,    
+        Refunded = 3,
     }
 }

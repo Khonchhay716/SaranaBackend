@@ -9,20 +9,19 @@ using DomainSM = POS.Domain.Entities.StockMovement;
 
 namespace POS.Application.Features.StockMovement
 {
-    // ✅ Shared mapper
     internal static class SMMapper
     {
         public static StockMovementInfo Map(DomainSM sm) => new()
         {
-            Id           = sm.Id,
-            ProductId    = sm.ProductId,
-            Type         = sm.Type,
-            Quantity     = sm.Quantity,
-            Price        = sm.Price,
-            CostPrice    = sm.CostPrice,
-            Notes        = sm.Notes,
+            Id = sm.Id,
+            ProductId = sm.ProductId,
+            Type = sm.Type,
+            Quantity = sm.Quantity,
+            Price = sm.Price,
+            CostPrice = sm.CostPrice,
+            Notes = sm.Notes,
             MovementDate = sm.MovementDate,
-            CreatedDate  = sm.CreatedDate,
+            CreatedDate = sm.CreatedDate,
         };
     }
 
@@ -30,12 +29,12 @@ namespace POS.Application.Features.StockMovement
     // ── CREATE ──────────────────────────────────────────────────
     public record StockMovementCreateCommand : IRequest<ApiResponse<StockMovementInfo>>
     {
-        public int     ProductId    { get; set; }
-        public string  Type         { get; set; } = string.Empty; // "StockIn" | "StockOut" | "Adjustment"
-        public int     Quantity     { get; set; }
-        public decimal Price        { get; set; }
-        public decimal CostPrice    { get; set; }
-        public string? Notes        { get; set; }
+        public int ProductId { get; set; }
+        public string Type { get; set; } = string.Empty;
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public decimal CostPrice { get; set; }
+        public string? Notes { get; set; }
         public DateTimeOffset? MovementDate { get; set; }
     }
 
@@ -78,12 +77,12 @@ namespace POS.Application.Features.StockMovement
 
             var sm = new DomainSM
             {
-                ProductId    = request.ProductId,
-                Type         = request.Type,
-                Quantity     = request.Quantity,
-                Price        = request.Price,
-                CostPrice    = request.CostPrice,
-                Notes        = request.Notes,
+                ProductId = request.ProductId,
+                Type = request.Type,
+                Quantity = request.Quantity,
+                Price = request.Price,
+                CostPrice = request.CostPrice,
+                Notes = request.Notes,
                 MovementDate = request.MovementDate ?? DateTimeOffset.UtcNow,
             };
 
@@ -109,8 +108,8 @@ namespace POS.Application.Features.StockMovement
     public record StockMovementUpdateCommand : IRequest<ApiResponse<StockMovementInfo>>
     {
         [System.Text.Json.Serialization.JsonIgnore]
-        public int     Id           { get; set; }
-        public string? Notes        { get; set; }
+        public int Id { get; set; }
+        public string? Notes { get; set; }
         public DateTimeOffset? MovementDate { get; set; }
     }
 
@@ -130,7 +129,7 @@ namespace POS.Application.Features.StockMovement
             if (sm == null)
                 return ApiResponse<StockMovementInfo>.NotFound($"Stock movement with id {request.Id} not found");
 
-            if (request.Notes        != null) sm.Notes        = request.Notes;
+            if (request.Notes != null) sm.Notes = request.Notes;
             if (request.MovementDate != null) sm.MovementDate = request.MovementDate.Value;
             sm.UpdatedDate = DateTimeOffset.UtcNow;
 
@@ -161,7 +160,7 @@ namespace POS.Application.Features.StockMovement
             if (sm == null)
                 return ApiResponse<bool>.NotFound($"Stock movement with id {request.Id} not found");
 
-            sm.IsDeleted   = true;
+            sm.IsDeleted = true;
             sm.DeletedDate = DateTimeOffset.UtcNow;
 
             if (sm.Product != null)

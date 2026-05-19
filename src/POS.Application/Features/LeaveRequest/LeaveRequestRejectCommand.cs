@@ -40,13 +40,13 @@ namespace POS.Application.Features.Leave
             LeaveRequestRejectCommand request,
             CancellationToken cancellationToken)
         {
-            // ✅ Get userId from token
+            // Get userId from token
             var userId = _currentUser.UserId;
             if (userId == null)
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     "Unauthorized. Please login again.");
 
-            // ✅ Get StaffId from Person table
+            // Get StaffId from Person table
             var person = await _context.Persons
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == userId.Value && !x.IsDeleted, cancellationToken);
@@ -60,7 +60,7 @@ namespace POS.Application.Features.Leave
 
             var currentStaffId = person.StaffId.Value;
 
-            // ✅ Include Approver too for MapToInfo
+            // Include Approver too for MapToInfo
             var entity = await _context.LeaveRequests
                 .Include(x => x.Staff)
                 .Include(x => x.LeaveType)
@@ -75,7 +75,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     $"Cannot reject a request with status '{entity.Status}'.");
 
-            // ✅ Check chain — B and A both can reject C's request
+            // Check chain — B and A both can reject C's request
             var isInChain = await IsInApprovalChainAsync(
                 entity.StaffId,
                 currentStaffId,
@@ -93,7 +93,7 @@ namespace POS.Application.Features.Leave
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            // ✅ Reload with Approver (ApproverId just updated)
+            // Reload with Approver (ApproverId just updated)
             var updated = await _context.LeaveRequests
                 .Include(x => x.Staff)
                 .Include(x => x.LeaveType)

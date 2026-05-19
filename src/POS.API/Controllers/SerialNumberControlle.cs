@@ -2,7 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using POS.API.Attributes;
 using POS.API.Extensions;
-using POS.Application.Features.SerialNumber;  // ✅ Query + Commands all here now
+using POS.Application.Features.SerialNumber; 
 
 namespace POS.API.Controllers
 {

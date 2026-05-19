@@ -66,11 +66,8 @@ namespace POS.Application.Features.Role
             {
                 return ApiResponse.NotFound($"Role with id {request.RoleId} was not found");
             }
-
-            // Remove existing permissions
             _context.RolePermissions.RemoveRange(role.RolePermissions);
 
-            // Add new permissions
             foreach (var permissionName in request.Permissions)
             {
                 role.RolePermissions.Add(new Domain.Entities.RolePermission

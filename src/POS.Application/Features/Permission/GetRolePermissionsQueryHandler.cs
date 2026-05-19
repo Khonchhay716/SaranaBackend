@@ -1,5 +1,3 @@
-// POS.Application/Features/Permission/GetRolePermissionsQueryHandler.cs
-
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Interfaces;
@@ -9,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace POS.Application.Features.Permission
 {
-    // FIX: Make the return type nullable
     public record GetRolePermissionsQuery(int RoleId) : IRequest<RolePermissionResponse?>;
 
     public class GetRolePermissionsQueryHandler : IRequestHandler<GetRolePermissionsQuery, RolePermissionResponse?>
@@ -29,7 +26,6 @@ namespace POS.Application.Features.Permission
 
             if (role == null)
             {
-                // Returning null is now valid with the nullable return type
                 return null;
             }
 

@@ -18,7 +18,7 @@ namespace POS.Application.Features.Customer
 
         public async Task<ApiResponse<bool>> Handle(
             CustomerDeleteCommand request,
-            CancellationToken     cancellationToken)
+            CancellationToken cancellationToken)
         {
             var customer = await _context.Customers
                 .FirstOrDefaultAsync(c => c.Id == request.Id && !c.IsDeleted, cancellationToken);
@@ -26,7 +26,7 @@ namespace POS.Application.Features.Customer
             if (customer == null)
                 return ApiResponse<bool>.NotFound($"Customer with id {request.Id} was not found.");
 
-            customer.IsDeleted   = true;
+            customer.IsDeleted = true;
             customer.DeletedDate = DateTimeOffset.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);

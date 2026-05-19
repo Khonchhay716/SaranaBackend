@@ -1,5 +1,3 @@
-// POS.Application/Features/StockMovement/StockMovementListQuery.cs
-// ✅ Same namespace as commands — no extra using needed in controller
 using FluentValidation;
 using MediatR;
 using POS.Application.Common.Dto;
@@ -11,10 +9,10 @@ namespace POS.Application.Features.StockMovement
 {
     public class StockMovementListQuery : PaginationRequest, IRequest<PaginatedResult<StockMovementInfo>>
     {
-        public int     ProductId { get; set; }
-        public string? Type      { get; set; }  // "StockIn" | "StockOut" | null = all
+        public int ProductId { get; set; }
+        public string? Type { get; set; }
         public DateTimeOffset? FromDate { get; set; }
-        public DateTimeOffset? ToDate   { get; set; }
+        public DateTimeOffset? ToDate { get; set; }
     }
 
     public class StockMovementListQueryValidator : AbstractValidator<StockMovementListQuery>
@@ -54,15 +52,15 @@ namespace POS.Application.Features.StockMovement
 
             var projected = query.Select(sm => new StockMovementInfo
             {
-                Id           = sm.Id,
-                ProductId    = sm.ProductId,
-                Type         = sm.Type,
-                Quantity     = sm.Quantity,
-                Price        = sm.Price,
-                CostPrice    = sm.CostPrice,
-                Notes        = sm.Notes,
+                Id = sm.Id,
+                ProductId = sm.ProductId,
+                Type = sm.Type,
+                Quantity = sm.Quantity,
+                Price = sm.Price,
+                CostPrice = sm.CostPrice,
+                Notes = sm.Notes,
                 MovementDate = sm.MovementDate,
-                CreatedDate  = sm.CreatedDate,
+                CreatedDate = sm.CreatedDate,
             });
 
             return await projected.ToPaginatedResultAsync(request.Page, request.PageSize);

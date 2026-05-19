@@ -1,4 +1,3 @@
-// POS.Application/Features/Discount/DiscountListQuery.cs
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +9,10 @@ namespace POS.Application.Features.Discount
 {
     public class DiscountListQuery : PaginationRequest, IRequest<PaginatedResult<DiscountInfo>>
     {
-        public string? Search   { get; set; }
-        public string? Type     { get; set; }  // "Percentage" | "FixedAmount"
-        public bool?   IsActive { get; set; }
-        public bool?   IsGlobal { get; set; }  // true = global | false = specific | null = all
+        public string? Search { get; set; }
+        public string? Type { get; set; }
+        public bool? IsActive { get; set; }
+        public bool? IsGlobal { get; set; }
     }
 
     public class DiscountListQueryValidator : AbstractValidator<DiscountListQuery>
@@ -65,31 +64,31 @@ namespace POS.Application.Features.Discount
 
             var projectedQuery = query.Select(d => new DiscountInfo
             {
-                Id             = d.Id,
-                Name           = d.Name,
-                Description    = d.Description,
-                Type           = d.Type,
-                Value          = d.Value,
+                Id = d.Id,
+                Name = d.Name,
+                Description = d.Description,
+                Type = d.Type,
+                Value = d.Value,
                 MinOrderAmount = d.MinOrderAmount,
-                StartDate      = d.StartDate,
-                EndDate        = d.EndDate,
-                IsActive       = d.IsActive,
-                IsGlobal       = !d.ProductDiscounts.Any(pd => !pd.IsDeleted),
-                IsDeleted      = d.IsDeleted,
-                CreatedDate    = d.CreatedDate,
-                CreatedBy      = d.CreatedBy,
-                UpdatedDate    = d.UpdatedDate,
-                UpdatedBy      = d.UpdatedBy,
+                StartDate = d.StartDate,
+                EndDate = d.EndDate,
+                IsActive = d.IsActive,
+                IsGlobal = !d.ProductDiscounts.Any(pd => !pd.IsDeleted),
+                IsDeleted = d.IsDeleted,
+                CreatedDate = d.CreatedDate,
+                CreatedBy = d.CreatedBy,
+                UpdatedDate = d.UpdatedDate,
+                UpdatedBy = d.UpdatedBy,
                 Products = d.ProductDiscounts
                     .Where(pd => !pd.IsDeleted)
                     .Select(pd => new DiscountProductItem
                     {
                         ProductDiscountId = pd.Id,
-                        ProductId         = pd.ProductId,
-                        ProductName       = pd.Product.Name,
-                        ProductSKU        = pd.Product.SKU,
-                        ImageProduct      = pd.Product.ImageProduct,
-                        Price             = pd.Product.Price,
+                        ProductId = pd.ProductId,
+                        ProductName = pd.Product.Name,
+                        ProductSKU = pd.Product.SKU,
+                        ImageProduct = pd.Product.ImageProduct,
+                        Price = pd.Product.Price,
                     }).ToList(),
             });
 

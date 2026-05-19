@@ -1,7 +1,3 @@
-
-// ═══════════════════════════════════════════════════════════════
-// POS.Application/Features/Discount/DiscountQuery.cs
-// ═══════════════════════════════════════════════════════════════
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;

@@ -17,7 +17,7 @@ namespace POS.Application.Features.Customer
         public string? UpdatedBy { get; set; }
         public DateTimeOffset? DeletedDate { get; set; }
         public string? DeletedBy { get; set; }
-        public LinkedUserInfo? User {get; set;}
+        public LinkedUserInfo? User { get; set; }
     }
 
 

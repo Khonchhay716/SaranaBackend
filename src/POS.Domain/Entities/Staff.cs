@@ -12,7 +12,7 @@ namespace POS.Domain.Entities
         public decimal Salary { get; set; }
         public bool Status { get; set; } = true;
         public int? SupervisorId { get; set; }
-        public Staff? Supervisor { get; set; } 
+        public Staff? Supervisor { get; set; }
 
         public virtual Person? Person { get; set; }
     }

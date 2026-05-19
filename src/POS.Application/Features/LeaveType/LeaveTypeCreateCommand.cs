@@ -48,11 +48,11 @@ namespace POS.Application.Features.Leave
 
             var entity = new DomainLeaveType
             {
-                Name           = request.Name.Trim(),
+                Name = request.Name.Trim(),
                 MaxDaysPerYear = request.MaxDaysPerYear,
-                Description    = request.Description.Trim(),
-                IsActive       = request.IsActive,
-                CreatedDate    = DateTimeOffset.UtcNow,
+                Description = request.Description.Trim(),
+                IsActive = request.IsActive,
+                CreatedDate = DateTimeOffset.UtcNow,
             };
 
             _context.LeaveTypes.Add(entity);
@@ -64,18 +64,18 @@ namespace POS.Application.Features.Leave
 
         internal static LeaveTypeInfo MapToInfo(DomainLeaveType x) => new()
         {
-            Id             = x.Id,
-            Name           = x.Name,
+            Id = x.Id,
+            Name = x.Name,
             MaxDaysPerYear = x.MaxDaysPerYear,
-            Description    = x.Description,
-            IsActive       = x.IsActive,
-            IsDeleted      = x.IsDeleted,
-            CreatedDate    = x.CreatedDate,
-            CreatedBy      = x.CreatedBy,
-            UpdatedDate    = x.UpdatedDate,
-            UpdatedBy      = x.UpdatedBy,
-            DeletedDate    = x.DeletedDate,
-            DeletedBy      = x.DeletedBy,
+            Description = x.Description,
+            IsActive = x.IsActive,
+            IsDeleted = x.IsDeleted,
+            CreatedDate = x.CreatedDate,
+            CreatedBy = x.CreatedBy,
+            UpdatedDate = x.UpdatedDate,
+            UpdatedBy = x.UpdatedBy,
+            DeletedDate = x.DeletedDate,
+            DeletedBy = x.DeletedBy,
         };
     }
 }

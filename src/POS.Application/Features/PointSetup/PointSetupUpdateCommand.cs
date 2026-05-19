@@ -9,15 +9,10 @@ namespace POS.Application.Features.PointSetup
 {
     public record PointSetupUpdateCommand : IRequest<ApiResponse<PointSetupInfo>>
     {
-        // ==================== Earning ====================
         public decimal PointValue          { get; set; } = 0;
         public decimal MinOrderAmount      { get; set; } = 0;
         public int?    MaxPointPerOrder    { get; set; } = null;
-
-        // ==================== Redemption ====================
         public decimal PointsPerRedemption { get; set; } = 0;
-
-        // ==================== Status ====================
         public bool    IsActive            { get; set; } = false;
     }
 
@@ -70,7 +65,6 @@ namespace POS.Application.Features.PointSetup
             if (config == null)
                 return ApiResponse<PointSetupInfo>.NotFound("Point setup configuration not found.");
 
-            // ==================== Update Fields ====================
             config.PointValue          = request.PointValue;
             config.MinOrderAmount      = request.MinOrderAmount;
             config.MaxPointPerOrder    = request.MaxPointPerOrder;

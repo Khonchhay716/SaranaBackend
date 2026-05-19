@@ -54,7 +54,7 @@ namespace POS.Application.Features.Customer
             CancellationToken cancellationToken)
         {
             var customer = await _context.Customers
-                .Include(c => c.Person) 
+                .Include(c => c.Person)
                 .FirstOrDefaultAsync(c => c.Id == request.Id && !c.IsDeleted, cancellationToken);
 
             if (customer == null)
@@ -75,7 +75,7 @@ namespace POS.Application.Features.Customer
             await _context.SaveChangesAsync(cancellationToken);
 
             var data = customer.Adapt<CustomerInfo>();
-            
+
             if (customer.Person != null && !customer.Person.IsDeleted)
             {
                 data.User = new LinkedUserInfo

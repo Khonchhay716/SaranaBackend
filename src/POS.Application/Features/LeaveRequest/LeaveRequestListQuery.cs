@@ -41,18 +41,18 @@ namespace POS.Application.Features.Leave
             LeaveRequestListQuery request,
             CancellationToken cancellationToken)
         {
-            // ✅ Get current StaffId from Person
+            // Get current StaffId from Person
             var userId = _currentUser.UserId;
             var person = await _context.Persons
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == userId && !x.IsDeleted, cancellationToken);
 
-            // ✅ Get subordinate IDs — empty set if no staff profile
+            // Get subordinate IDs — empty set if no staff profile
             var subordinateIds = person?.StaffId != null
                 ? await GetAllSubordinateIdsAsync(person.StaffId.Value, cancellationToken)
                 : new HashSet<int>();
 
-            // ✅ Always go through ToPaginatedResultAsync — handles empty correctly
+            // Always go through ToPaginatedResultAsync — handles empty correctly
             var query = _context.LeaveRequests
                 .AsNoTracking()
                 .Include(x => x.Staff)
@@ -74,42 +74,42 @@ namespace POS.Application.Features.Leave
 
             var projected = query.Select(x => new LeaveRequestInfo
             {
-                Id            = x.Id,
-                StaffId       = x.StaffId,
-                StaffName     = x.Staff.FirstName + " " + x.Staff.LastName,
-                StaffImage    = x.Staff.ImageProfile,
-                LeaveTypeId   = x.LeaveTypeId,
+                Id = x.Id,
+                StaffId = x.StaffId,
+                StaffName = x.Staff.FirstName + " " + x.Staff.LastName,
+                StaffImage = x.Staff.ImageProfile,
+                LeaveTypeId = x.LeaveTypeId,
                 LeaveTypeName = x.LeaveType.Name,
-                StartDate     = x.StartDate,
-                EndDate       = x.EndDate,
-                TotalDays     = x.TotalDays,
-                Reason        = x.Reason,
-                Status        = x.Status,
+                StartDate = x.StartDate,
+                EndDate = x.EndDate,
+                TotalDays = x.TotalDays,
+                Reason = x.Reason,
+                Status = x.Status,
                 Session = x.Session,
-                ApproverId    = x.ApproverId,
-                ApproverName  = x.Approver != null
+                ApproverId = x.ApproverId,
+                ApproverName = x.Approver != null
                     ? x.Approver.FirstName + " " + x.Approver.LastName
                     : null,
-                ApprovedDate  = x.ApprovedDate,
-                ApprovalNote  = x.ApprovalNote,
-                IsDeleted     = x.IsDeleted,
-                CreatedDate   = x.CreatedDate,
-                CreatedBy     = x.CreatedBy,
-                UpdatedDate   = x.UpdatedDate,
-                UpdatedBy     = x.UpdatedBy,
-                DeletedDate   = x.DeletedDate,
-                DeletedBy     = x.DeletedBy,
+                ApprovedDate = x.ApprovedDate,
+                ApprovalNote = x.ApprovalNote,
+                IsDeleted = x.IsDeleted,
+                CreatedDate = x.CreatedDate,
+                CreatedBy = x.CreatedBy,
+                UpdatedDate = x.UpdatedDate,
+                UpdatedBy = x.UpdatedBy,
+                DeletedDate = x.DeletedDate,
+                DeletedBy = x.DeletedBy,
             });
 
             return await projected.ToPaginatedResultAsync(request.Page, request.PageSize);
         }
 
-        // ✅ Walk down tree — collect all subordinate IDs recursively
+        // Walk down tree — collect all subordinate IDs recursively
         private async Task<HashSet<int>> GetAllSubordinateIdsAsync(
             int supervisorId,
             CancellationToken cancellationToken)
         {
-            var result  = new HashSet<int>();
+            var result = new HashSet<int>();
             var toCheck = new Queue<int>();
             toCheck.Enqueue(supervisorId);
 
@@ -134,5 +134,5 @@ namespace POS.Application.Features.Leave
             return result;
         }
     }
-   
+
 }

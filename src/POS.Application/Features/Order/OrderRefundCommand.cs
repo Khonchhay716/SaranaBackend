@@ -52,22 +52,18 @@ namespace POS.Application.Features.Order
 
                 if (item.SerialNumber != null)
                 {
-                    // ✅ Serial: return to Available
                     item.SerialNumber.Status   = "Available";
                     item.SerialNumber.SoldDate = null;
                     item.Product.Stock        += 1;
-
-                    // ✅ Fix duplicate key — release unique constraint
                     item.SerialNumberId = null;
                 }
                 else
                 {
-                    // ✅ Normal product — return quantity
                     item.Product.Stock += item.Quantity;
                 }
             }
 
-            // ==================== Reverse Customer Point ====================
+            // Reverse Customer Point 
             if (order.CustomerId.HasValue)
             {
                 var customer = await _context.Customers
@@ -75,17 +71,15 @@ namespace POS.Application.Features.Order
 
                 if (customer != null)
                 {
-                    // ✅ Remove earned points (Cash/QR order)
                     if (order.EarnedPoints > 0)
                         customer.TotalPoint = Math.Max(0, customer.TotalPoint - order.EarnedPoints);
 
-                    // ✅ Return spent points (Point order)
                     if (order.PointsUsed > 0)
                         customer.TotalPoint += order.PointsUsed;
                 }
             }
 
-            // ==================== Update Order ====================
+            // Update Order 
             order.PaymentStatus = PaymentStatus.Refunded;
             order.Notes         = string.IsNullOrWhiteSpace(request.Reason)
                 ? order.Notes

@@ -1,4 +1,3 @@
-// POS.Application/Features/Branch/BranchUpdateCommand.cs
 using FluentValidation;
 using Mapster;
 using MediatR;
@@ -10,7 +9,6 @@ namespace POS.Application.Features.Branch
 {
     public record BranchUpdateCommand : IRequest<ApiResponse<BranchInfo>>
     {
-        // ✅ Id is NOT in the request body — it is injected by the controller from the route
         [System.Text.Json.Serialization.JsonIgnore]
         public int Id { get; set; }
 

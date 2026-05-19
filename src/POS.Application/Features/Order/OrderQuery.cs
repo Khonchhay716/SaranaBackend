@@ -56,7 +56,7 @@ namespace POS.Application.Features.Order
                 TotalAmount = order.TotalAmount,
                 EarnedPoints = order.EarnedPoints,
                 PointsUsed = order.PointsUsed,
-                CashReceived = order.CashReceived, 
+                CashReceived = order.CashReceived,
                 PaymentMethod = new TypeNamebase
                 {
                     Id = (int)(order.PaymentMethod ?? 0),

@@ -20,7 +20,7 @@ namespace POS.Domain.Entities
         public PaymentMethodCode? PaymentMethod { get; set; }
         public string? Notes { get; set; }
         public int EarnedPoints { get; set; } = 0;
-        public decimal CashReceived { get; set; } = 0; 
+        public decimal CashReceived { get; set; } = 0;
         public int PointsUsed { get; set; } = 0;
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }

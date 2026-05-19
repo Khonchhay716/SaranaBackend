@@ -1,4 +1,3 @@
-// POS.Application/Features/Branch/BranchCreateCommand.cs
 using FluentValidation;
 using Mapster;
 using MediatR;

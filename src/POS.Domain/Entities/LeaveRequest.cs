@@ -10,11 +10,10 @@ namespace POS.Domain.Entities
         public virtual LeaveType LeaveType { get; set; } = null!;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public decimal TotalDays { get; set; }      // ✅ decimal for 0.5
+        public decimal TotalDays { get; set; }
         public string Reason { get; set; } = string.Empty;
         public string Status { get; set; } = "Pending";
-        public string Session { get; set; } = "FullDay"; // ✅ add
-
+        public string Session { get; set; } = "FullDay";
         public int? ApproverId { get; set; }
         public virtual Staff? Approver { get; set; }
         public DateTimeOffset? ApprovedDate { get; set; }

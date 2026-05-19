@@ -1,4 +1,3 @@
-// POS.Application/Features/Branch/BranchLookupQuery.cs
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;
@@ -30,7 +29,7 @@ namespace POS.Application.Features.Branch
         public async Task<PaginatedResult<BranchInfoLookup>> Handle(BranchLookupListQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Branches
-                .Where(b => !b.IsDeleted && b.Status == "Active")  // ✅ hardcoded Active only
+                .Where(b => !b.IsDeleted && b.Status == "Active") 
                 .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(request.Search))

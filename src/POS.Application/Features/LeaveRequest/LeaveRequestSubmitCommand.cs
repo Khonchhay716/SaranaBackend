@@ -13,7 +13,7 @@ namespace POS.Application.Features.Leave
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public string Reason { get; set; } = string.Empty;
-        public string Session { get; set; } = "FullDay"; // ✅ add
+        public string Session { get; set; } = "FullDay";
     }
 
     public class LeaveRequestSubmitCommandValidator : AbstractValidator<LeaveRequestSubmitCommand>
@@ -75,7 +75,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     "You have no supervisor assigned. Please contact HR.");
 
-            var staffId      = person.StaffId.Value;
+            var staffId = person.StaffId.Value;
             var supervisorId = person.Staff.SupervisorId;
 
             var leaveType = await _context.LeaveTypes
@@ -86,9 +86,9 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.NotFound(
                     $"Leave type with ID {request.LeaveTypeId} not found or inactive.");
 
-            // ✅ Calculate working days with session logic
+            // Calculate working days with session logic
             var isFirstWorkingDay = true;
-            decimal totalDays     = 0;
+            decimal totalDays = 0;
 
             for (var date = request.StartDate.Date; date <= request.EndDate.Date; date = date.AddDays(1))
             {
@@ -110,7 +110,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     "Leave request must include at least one working day.");
 
-            // ✅ Check balance
+            // Check balance
             var balance = await _context.LeaveBalances
                 .FirstOrDefaultAsync(x => x.StaffId == staffId
                     && x.LeaveTypeId == request.LeaveTypeId
@@ -121,7 +121,7 @@ namespace POS.Application.Features.Leave
                 return ApiResponse<LeaveRequestInfo>.BadRequest(
                     $"Insufficient leave balance. Remaining: {balance.TotalDays - balance.UsedDays} days.");
 
-            // ✅ Check overlapping
+            // Check overlapping
             var overlapping = await _context.LeaveRequests
                 .AnyAsync(x => x.StaffId == staffId
                     && x.Status != "Rejected"
@@ -135,15 +135,15 @@ namespace POS.Application.Features.Leave
 
             var entity = new DomainLeaveRequest
             {
-                StaffId     = staffId,
+                StaffId = staffId,
                 LeaveTypeId = request.LeaveTypeId,
-                StartDate   = request.StartDate,
-                EndDate     = request.EndDate,
-                TotalDays   = totalDays,           // ✅ decimal
-                Reason      = request.Reason.Trim(),
-                Status      = "Pending",
-                Session     = request.Session,     // ✅ save session
-                ApproverId  = supervisorId,
+                StartDate = request.StartDate,
+                EndDate = request.EndDate,
+                TotalDays = totalDays,
+                Reason = request.Reason.Trim(),
+                Status = "Pending",
+                Session = request.Session,
+                ApproverId = supervisorId,
                 CreatedDate = DateTimeOffset.UtcNow,
             };
 
@@ -166,31 +166,31 @@ namespace POS.Application.Features.Leave
 
         internal static LeaveRequestInfo MapToInfo(DomainLeaveRequest x) => new()
         {
-            Id            = x.Id,
-            StaffId       = x.StaffId,
-            StaffName     = x.Staff != null ? $"{x.Staff.FirstName} {x.Staff.LastName}" : "",
-            StaffImage    = x.Staff?.ImageProfile ?? "",
-            LeaveTypeId   = x.LeaveTypeId,
+            Id = x.Id,
+            StaffId = x.StaffId,
+            StaffName = x.Staff != null ? $"{x.Staff.FirstName} {x.Staff.LastName}" : "",
+            StaffImage = x.Staff?.ImageProfile ?? "",
+            LeaveTypeId = x.LeaveTypeId,
             LeaveTypeName = x.LeaveType?.Name ?? "",
-            StartDate     = x.StartDate,
-            EndDate       = x.EndDate,
-            TotalDays     = x.TotalDays,
-            Reason        = x.Reason,
-            Status        = x.Status,
-            Session       = x.Session,             // ✅ add
-            ApproverId    = x.ApproverId,
-            ApproverName  = x.Approver != null
+            StartDate = x.StartDate,
+            EndDate = x.EndDate,
+            TotalDays = x.TotalDays,
+            Reason = x.Reason,
+            Status = x.Status,
+            Session = x.Session,
+            ApproverId = x.ApproverId,
+            ApproverName = x.Approver != null
                 ? $"{x.Approver.FirstName} {x.Approver.LastName}"
                 : null,
-            ApprovedDate  = x.ApprovedDate,
-            ApprovalNote  = x.ApprovalNote,
-            IsDeleted     = x.IsDeleted,
-            CreatedDate   = x.CreatedDate,
-            CreatedBy     = x.CreatedBy,
-            UpdatedDate   = x.UpdatedDate,
-            UpdatedBy     = x.UpdatedBy,
-            DeletedDate   = x.DeletedDate,
-            DeletedBy     = x.DeletedBy,
+            ApprovedDate = x.ApprovedDate,
+            ApprovalNote = x.ApprovalNote,
+            IsDeleted = x.IsDeleted,
+            CreatedDate = x.CreatedDate,
+            CreatedBy = x.CreatedBy,
+            UpdatedDate = x.UpdatedDate,
+            UpdatedBy = x.UpdatedBy,
+            DeletedDate = x.DeletedDate,
+            DeletedBy = x.DeletedBy,
         };
     }
 }

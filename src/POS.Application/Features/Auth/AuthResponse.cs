@@ -1,5 +1,3 @@
-
-// POS.Application/Features/Auth/AuthResponse.cs
 using System.Collections.Generic;
 using POS.Application.Features.Role;
 using POS.Domain.Entities;

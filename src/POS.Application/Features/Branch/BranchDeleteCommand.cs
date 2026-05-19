@@ -1,4 +1,3 @@
-// POS.Application/Features/Branch/BranchDeleteCommand.cs
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;
@@ -27,7 +26,6 @@ namespace POS.Application.Features.Branch
             if (branch == null)
                 return ApiResponse<bool>.NotFound($"Branch with id {request.Id} was not found.");
 
-            // Soft-delete — do NOT hard-delete so Product.BranchId FK remains valid
             branch.IsDeleted   = true;
             branch.DeletedDate = DateTimeOffset.UtcNow;
 

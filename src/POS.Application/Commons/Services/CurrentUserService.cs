@@ -22,7 +22,6 @@ namespace POS.Application.Common.Services
             _context = context;
             _cache = cache;
         }
-
         public int? UserId
         {
             get
@@ -37,7 +36,7 @@ namespace POS.Application.Common.Services
 
         public async Task<IEnumerable<string>> GetPermissionsAsync()
         {
-            // ⭐ Return empty if no user is logged in
+            // Return empty if no user is logged in
             if (UserId == null)
                 return Enumerable.Empty<string>();
 

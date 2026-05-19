@@ -27,13 +27,13 @@ namespace POS.Application.Features.Leave
             WorkingDayCalculateCommand request,
             CancellationToken cancellationToken)
         {
-            // ✅ Validate dates
+            // Validate dates
             if (request.EndDate.Date < request.StartDate.Date)
                 return Task.FromResult(
                     ApiResponse<WorkingDayResult>.BadRequest(
                         "End date must be after or equal to start date."));
 
-            // ✅ Validate session
+            // Validate session
             var validSessions = new[] { "FullDay", "Morning", "Afternoon" };
             if (!validSessions.Contains(request.Session))
                 return Task.FromResult(
@@ -46,13 +46,13 @@ namespace POS.Application.Features.Leave
             var sundays = 0;
             decimal totalWorkingDays = 0;
 
-            var isFirstWorkingDay = true; // ✅ track first working day
+            var isFirstWorkingDay = true;
 
             for (var date = start; date <= end; date = date.AddDays(1))
             {
                 calendarDays++;
 
-                // ✅ Sunday = skip
+                // Sunday = skip
                 if (date.DayOfWeek == DayOfWeek.Sunday)
                 {
                     sundays++;
@@ -61,12 +61,12 @@ namespace POS.Application.Features.Leave
 
                 if (request.Session == "FullDay")
                 {
-                    // ✅ All days = full day
+                    // All days = full day
                     totalWorkingDays += 1.0m;
                 }
                 else
                 {
-                    // ✅ Morning or Afternoon:
+                    // Morning or Afternoon:
                     // First working day = 0.5
                     // Remaining days    = 1.0 (full day)
                     if (isFirstWorkingDay)
