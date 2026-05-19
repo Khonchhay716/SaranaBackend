@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using POS.Application.Common.Interfaces;
 using POS.Application.Features.Permission;
 using POS.Domain.Entities;
@@ -13,11 +14,13 @@ namespace POS.Infrastructure.Data
     {
         private readonly MyAppDbContext _context;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IConfiguration _configuration;
 
-        public DatabaseSeeder(MyAppDbContext context, IPasswordHasher passwordHasher)
+        public DatabaseSeeder(MyAppDbContext context, IPasswordHasher passwordHasher, IConfiguration configuration)
         {
             _context = context;
             _passwordHasher = passwordHasher;
+            _configuration = configuration;
         }
 
         public async Task SeedAsync()
@@ -41,7 +44,7 @@ namespace POS.Infrastructure.Data
             }
         }
 
-        // Seeding SuperAdmin Role
+        // function this work for check in table role have role SuperAdmin or not ? if have no create and if no is create auto 
         private async Task SeedSuperAdminRoleAsync()
         {
             var superAdminRole = await _context.Roles
@@ -68,6 +71,8 @@ namespace POS.Infrastructure.Data
                 Console.WriteLine("✓ SuperAdmin role already exists.");
             }
         }
+
+        // function this work for check in table role have role User Default or not ? if have no create and if no is create auto 
         private async Task SeedUserRoleAsync()
         {
             var userRole = await _context.Roles
@@ -84,11 +89,11 @@ namespace POS.Infrastructure.Data
                     UpdatedDate = DateTimeOffset.UtcNow
                 });
                 await _context.SaveChangesAsync();
-                Console.WriteLine("✓ User Default role created.");
+                Console.WriteLine(" User Default role created.");
             }
             else
             {
-                Console.WriteLine("✓ User Default role already exists.");
+                Console.WriteLine(" User Default role already exists.");
             }
         }
 
@@ -100,7 +105,7 @@ namespace POS.Infrastructure.Data
 
             if (superAdminUser == null)
             {
-                var defaultPassword = Environment.GetEnvironmentVariable("SUPERADMIN_DEFAULT_PASSWORD") ?? "Password123!";
+                var defaultPassword = _configuration["SuperAdmin:DefaultPassword"] ?? "Password123!";
                 string hashedPassword = _passwordHasher.HashPassword(defaultPassword);
                 superAdminUser = new Person
                 {
@@ -131,11 +136,11 @@ namespace POS.Infrastructure.Data
                     });
                     await _context.SaveChangesAsync();
                 }
-                Console.WriteLine("✓ SuperAdmin user created (StaffId=null, CustomerId=null).");
+                Console.WriteLine("SuperAdmin user created (StaffId=null, CustomerId=null).");
             }
             else
             {
-                Console.WriteLine("✓ SuperAdmin user already exists.");
+                Console.WriteLine("SuperAdmin user already exists.");
             }
         }
 

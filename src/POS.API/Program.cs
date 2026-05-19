@@ -160,8 +160,9 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<MyAppDbContext>();
         var passwordHasher = services.GetRequiredService<IPasswordHasher>();
+        var configuration = builder.Configuration;
 
-        var seeder = new DatabaseSeeder(context, passwordHasher);
+        var seeder = new DatabaseSeeder(context, passwordHasher, configuration);
         await seeder.SeedAsync();
     }
     catch (Exception ex)
