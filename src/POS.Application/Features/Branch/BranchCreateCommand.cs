@@ -10,9 +10,9 @@ namespace POS.Application.Features.Branch
 {
     public record BranchCreateCommand : IRequest<ApiResponse<BranchInfo>>
     {
-        public string  BranchName  { get; set; } = string.Empty;
-        public string? Logo        { get; set; }
-        public string  Status      { get; set; } = "Active";
+        public string BranchName { get; set; } = string.Empty;
+        public string? Logo { get; set; }
+        public string Status { get; set; } = "Active";
         public string? Description { get; set; }
     }
 
@@ -41,10 +41,10 @@ namespace POS.Application.Features.Branch
 
         public async Task<ApiResponse<BranchInfo>> Handle(
             BranchCreateCommand request,
-            CancellationToken   cancellationToken)
+            CancellationToken cancellationToken)
         {
             // 1. Validate
-            var validator        = new BranchCreateCommandValidator();
+            var validator = new BranchCreateCommandValidator();
             var validationResult = validator.Validate(request);
             if (!validationResult.IsValid)
             {
@@ -61,9 +61,9 @@ namespace POS.Application.Features.Branch
             // 3. Create
             var branch = new DomainBranch
             {
-                BranchName  = request.BranchName,
-                Logo        = request.Logo,
-                Status      = request.Status,
+                BranchName = request.BranchName,
+                Logo = request.Logo,
+                Status = request.Status,
                 Description = request.Description,
             };
 

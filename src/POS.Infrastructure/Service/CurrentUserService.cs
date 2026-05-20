@@ -1,14 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using POS.Application.Common.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using System.Security.Claims; // ClaimTypes
+using Microsoft.AspNetCore.Http; // IHttpContextAccessor
 
-namespace POS.Application.Common.Services
+namespace POS.Infrastructure.Services
 {
     public class CurrentUserService : ICurrentUserService
     {

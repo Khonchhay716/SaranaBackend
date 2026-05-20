@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Common.Interfaces;
 using POS.Infrastructure.Data;
+using POS.Infrastructure.Services;
 
 namespace POS.Infrastructure
 {
@@ -11,17 +12,22 @@ namespace POS.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // Add PostgreSQL DbContext
-            services.AddDbContext<MyAppDbContext>(options =>
+            services.AddDbContext<MyAppDbContext>(options => 
                 options.UseNpgsql(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    b => {
-                        b.MigrationsAssembly(typeof(MyAppDbContext).Assembly.FullName);
-                        b.MigrationsHistoryTable("__EFMigrationsHistory", "pos");
-                    }));
+                    configuration.GetConnectionString("DefaultConnection"), 
+                    b =>
+                    {
+                        b.MigrationsAssembly(typeof(MyAppDbContext).Assembly.FullName); 
+                        b.MigrationsHistoryTable("__EFMigrationsHistory", "pos"); 
+                    })); 
 
             // Register the DbContext interface for DI
-            services.AddScoped<IMyAppDbContext>(provider => 
+            services.AddScoped<IMyAppDbContext>(provider =>
                 provider.GetRequiredService<MyAppDbContext>());
+
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IPasswordHasher, PasswordHasher>();
 
             return services;
         }

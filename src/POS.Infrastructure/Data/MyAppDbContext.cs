@@ -15,37 +15,27 @@ namespace POS.Infrastructure.Data
         }
 
         // ----------------- DbSets -----------------
-        public DbSet<Person> Persons { get; set; } = null!;
+        public DbSet<Person> Persons { get; set; }
         public DbSet<Staff> Staffs { get; set; }
         public DbSet<Customer> Customers { get; set; }
-        public DbSet<Role> Roles { get; set; } = null!;
-        public DbSet<Permission> Permissions { get; set; } = null!;
-        public DbSet<PersonRole> PersonRoles { get; set; } = null!;
-        public DbSet<RolePermission> RolePermissions { get; set; } = null!;
-        public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
-        public DbSet<Category> Categories { get; set; } = null!;
-        public DbSet<Branch> Branches { get; set; } = null!;
-        public DbSet<Product> Products { get; set; } = null!;
-        public DbSet<SerialNumber> SerialNumbers { get; set; } = null!;
-        public DbSet<StockMovement> StockMovements => Set<StockMovement>();
-        public DbSet<Order> Orders { get; set; } = null!;
-        public DbSet<OrderItem> OrderItems { get; set; } = null!;
-        public DbSet<Discount> Discounts => Set<Discount>();
-        public DbSet<ProductDiscount> ProductDiscounts => Set<ProductDiscount>();
-        public DbSet<LeaveType> LeaveTypes { get; set; } = null!;
-        public DbSet<LeaveRequest> LeaveRequests { get; set; } = null!;
-        public DbSet<LeaveBalance> LeaveBalances { get; set; } = null!;
-        public DbSet<PointSetup> PointSetups { get; set; } = null!;
-
-        // ----------------- Configuration -----------------
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseNpgsql(
-                    "Host=localhost;Port=5432;Database=mytest;Username=postgres;Password=chhay33333333;");
-            }
-        }
+        public DbSet<Role> Roles { get; set; } 
+        public DbSet<Permission> Permissions { get; set; } 
+        public DbSet<PersonRole> PersonRoles { get; set; }
+        public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Branch> Branches { get; set; }
+        public DbSet<Product> Products { get; set; } 
+        public DbSet<SerialNumber> SerialNumbers { get; set; } 
+        public DbSet<StockMovement> StockMovements { get; set; } 
+        public DbSet<Order> Orders { get; set; } 
+        public DbSet<OrderItem> OrderItems { get; set; } 
+        public DbSet<Discount> Discounts { get; set; } 
+        public DbSet<ProductDiscount> ProductDiscounts { get; set; } 
+        public DbSet<LeaveType> LeaveTypes { get; set; } 
+        public DbSet<LeaveRequest> LeaveRequests { get; set; }
+        public DbSet<LeaveBalance> LeaveBalances { get; set; } 
+        public DbSet<PointSetup> PointSetups { get; set; }
 
         // ----------------- SaveChanges -----------------
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

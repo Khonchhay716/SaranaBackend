@@ -1,17 +1,9 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using POS.Application.Common.Interfaces;
-using POS.Application.Common.Services;
+using POS.Application;
+using POS.Infrastructure;
 using POS.Infrastructure.Data;
-using POS.Infrastructure.Services;
-using POS.API.Authorization;
-using System.Text;
-using FluentValidation;
-using MediatR;
-using POS.Application.Features.SendMail;
+using POS.Application.Common.Interfaces;
+using POS.API;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,168 +11,40 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Register Services
-builder.Services.AddScoped<GmailService>();
-builder.Services.AddScoped<VerificationService>();
-
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1.0", new OpenApiInfo
-    {
-        Title = "POS System",
-        Version = "1.0",
-        Description = "Sokha SK System API Documentation"
-    });
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = "JWT Authorization header using the Bearer scheme. Just enter your token below (without 'Bearer' prefix).",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT"
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
-    });
-});
-
-// Database Context
-builder.Services.AddDbContext<MyAppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<IMyAppDbContext>(provider =>
-    provider.GetRequiredService<MyAppDbContext>());
-
-// HttpContext Accessor
+// call it by in folder which one 
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication();
+builder.Services.AddPresentationServices(builder.Configuration);
+builder.Services.AddHostedService<DatabaseSeeder>();
+// System Utilities
 builder.Services.AddHttpContextAccessor();
-
-// Memory Cache
 builder.Services.AddMemoryCache();
-
-// Services
-builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
-
-// MediatR
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-    cfg.RegisterServicesFromAssemblyContaining<IMyAppDbContext>();
-});
-
-// FluentValidation
-builder.Services.AddValidatorsFromAssemblyContaining<IMyAppDbContext>();
-
-// JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured");
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-            ClockSkew = TimeSpan.Zero
-        };
-
-        options.Events = new JwtBearerEvents
-        {
-            OnAuthenticationFailed = context =>
-            {
-                if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                {
-                    context.Response.Headers.Add("Token-Expired", "true");
-                }
-                return Task.CompletedTask;
-            }
-        };
-    });
-
-// Authorization Services
-builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
-builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-
-builder.Services.AddAuthorization(options =>
-{
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
-// cors for run local
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowProduction", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
-});
-// // cors for run with deploy(server)
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("AllowProduction", policy =>
-//     {
-//         policy.WithOrigins("https://sarana-front-end.vercel.app")
-//               .AllowAnyMethod()
-//               .AllowAnyHeader()
-//               .AllowCredentials();
-//     });
-// });
 
 var app = builder.Build();
 
-// dataseeding it create auto when server run with project new 
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<MyAppDbContext>();
-        var passwordHasher = services.GetRequiredService<IPasswordHasher>();
-        var configuration = builder.Configuration;
+// Database Seeding 
+// using (var scope = app.Services.CreateScope())
+// {
+//     var services = scope.ServiceProvider;
+//     try
+//     {
+//         var context = services.GetRequiredService<MyAppDbContext>();
+//         var passwordHasher = services.GetRequiredService<IPasswordHasher>();
+//         var seeder = new DatabaseSeeder(context, passwordHasher, builder.Configuration);
+//         await seeder.SeedAsync();
+//     }
+//     catch (Exception ex)
+//     {
+//         var logger = services.GetRequiredService<ILogger<Program>>();
+//         logger.LogError(ex, "An error occurred while seeding the database.");
+//     }
+// }
 
-        var seeder = new DatabaseSeeder(context, passwordHasher, configuration);
-        await seeder.SeedAsync();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred while seeding the database.");
-
-        Console.WriteLine("create data seeding is error");
-        Console.WriteLine($"   {ex.Message}");
-    }
-}
-
-// Create Uploads folder with image 
+// Create Uploads folder
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 if (!Directory.Exists(uploadsPath))
 {
     Directory.CreateDirectory(uploadsPath);
-    Console.WriteLine($"Created Uploads directory: {uploadsPath}");
 }
 
 app.UseStaticFiles(new StaticFileOptions

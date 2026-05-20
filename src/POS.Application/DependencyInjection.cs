@@ -3,6 +3,7 @@ using Mapster;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using POS.Application.Common.Behaviors;
+using POS.Application.Features.SendMail;
 using System.Reflection;
 
 namespace POS.Application
@@ -24,6 +25,9 @@ namespace POS.Application
 
             // Register Mapster
             services.AddMapster();
+            
+            services.AddScoped<GmailService>();
+            services.AddScoped<VerificationService>();
 
             return services;
         }

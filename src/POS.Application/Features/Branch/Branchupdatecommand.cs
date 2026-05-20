@@ -12,9 +12,9 @@ namespace POS.Application.Features.Branch
         [System.Text.Json.Serialization.JsonIgnore]
         public int Id { get; set; }
 
-        public string  BranchName  { get; set; } = string.Empty;
-        public string? Logo        { get; set; }
-        public string  Status      { get; set; } = "Active";
+        public string BranchName { get; set; } = string.Empty;
+        public string? Logo { get; set; }
+        public string Status { get; set; } = "Active";
         public string? Description { get; set; }
     }
 
@@ -45,7 +45,7 @@ namespace POS.Application.Features.Branch
 
         public async Task<ApiResponse<BranchInfo>> Handle(
             BranchUpdateCommand request,
-            CancellationToken   cancellationToken)
+            CancellationToken cancellationToken)
         {
             var branch = await _context.Branches
                 .FirstOrDefaultAsync(b => b.Id == request.Id && !b.IsDeleted, cancellationToken);
@@ -60,9 +60,9 @@ namespace POS.Application.Features.Branch
             if (nameExists)
                 return ApiResponse<BranchInfo>.BadRequest($"Branch name '{request.BranchName}' is already used by another branch.");
 
-            branch.BranchName  = request.BranchName;
-            branch.Logo        = request.Logo;
-            branch.Status      = request.Status;
+            branch.BranchName = request.BranchName;
+            branch.Logo = request.Logo;
+            branch.Status = request.Status;
             branch.Description = request.Description;
             branch.UpdatedDate = DateTimeOffset.UtcNow;
 

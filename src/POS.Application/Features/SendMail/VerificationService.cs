@@ -114,16 +114,16 @@ namespace POS.Application.Features.SendMail
                 To = email,
                 Subject = "Your Verification Code - Library System",
                 Body = $@"
-Hello,
+                Hello,
 
-Your verification code is: {code}
+                Your verification code is: {code}
 
-This code will expire in {CODE_EXPIRY_SECONDS} seconds.
+                This code will expire in {CODE_EXPIRY_SECONDS} seconds.
 
-If you didn't request this code, please ignore this email.
+                If you didn't request this code, please ignore this email.
 
-Best regards,
-Coffee Management System"
+                Best regards,
+                Coffee Management System"
             };
 
             await _gmailService.SendEmailAsync(emailDto);
