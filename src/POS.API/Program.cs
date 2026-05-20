@@ -22,25 +22,7 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
-// Database Seeding 
-// using (var scope = app.Services.CreateScope())
-// {
-//     var services = scope.ServiceProvider;
-//     try
-//     {
-//         var context = services.GetRequiredService<MyAppDbContext>();
-//         var passwordHasher = services.GetRequiredService<IPasswordHasher>();
-//         var seeder = new DatabaseSeeder(context, passwordHasher, builder.Configuration);
-//         await seeder.SeedAsync();
-//     }
-//     catch (Exception ex)
-//     {
-//         var logger = services.GetRequiredService<ILogger<Program>>();
-//         logger.LogError(ex, "An error occurred while seeding the database.");
-//     }
-// }
-
-// Create Uploads folder
+// Create Uploads folder 
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
 if (!Directory.Exists(uploadsPath))
 {
