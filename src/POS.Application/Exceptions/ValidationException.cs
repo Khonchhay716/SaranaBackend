@@ -1,3 +1,4 @@
+/// file for prepare message error to ui when have error 
 using FluentValidation.Results;
 
 namespace POS.Application.Exceptions;
