@@ -1,267 +1,267 @@
-using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using POS.Application.Common.Interfaces;
+// using System;
+// using System.Collections.Concurrent;
+// using System.Linq;
+// using System.Threading.Tasks;
+// using Microsoft.EntityFrameworkCore;
+// using POS.Application.Common.Interfaces;
 
-namespace POS.Application.Features.SendMail
-{
-    public class VerificationService
-    {
-        private static readonly ConcurrentDictionary<string, VerificationData> _verificationCodes
-            = new ConcurrentDictionary<string, VerificationData>();
+// namespace POS.Application.Features.SendMail
+// {
+//     public class VerificationService
+//     {
+//         private static readonly ConcurrentDictionary<string, VerificationData> _verificationCodes
+//             = new ConcurrentDictionary<string, VerificationData>();
 
-        private readonly GmailService _gmailService;
-        private readonly IMyAppDbContext _context;
+//         private readonly GmailService _gmailService;
+//         private readonly IMyAppDbContext _context;
 
-        private const int CODE_EXPIRY_SECONDS = 60;
-        private const int RESEND_COOLDOWN_SECONDS = 5;
-        private const int MAX_RESEND_ATTEMPTS = 3;
+//         private const int CODE_EXPIRY_SECONDS = 60;
+//         private const int RESEND_COOLDOWN_SECONDS = 5;
+//         private const int MAX_RESEND_ATTEMPTS = 3;
 
-        public VerificationService(
-            GmailService gmailService,
-            IMyAppDbContext context)
-        {
-            _gmailService = gmailService;
-            _context = context;
-        }
+//         public VerificationService(
+//             GmailService gmailService,
+//             IMyAppDbContext context)
+//         {
+//             _gmailService = gmailService;
+//             _context = context;
+//         }
 
-        // ---------------- Generate random 6-digit code ----------------
-        public string GenerateVerificationCode()
-        {
-            Random random = new Random();
-            return random.Next(100000, 999999).ToString();
-        }
+//         // ---------------- Generate random 6-digit code ----------------
+//         public string GenerateVerificationCode()
+//         {
+//             Random random = new Random();
+//             return random.Next(100000, 999999).ToString();
+//         }
 
-        // ---------------- Send verification code ----------------
-        public async Task<SendCodeResult> SendVerificationCodeAsync(string email)
-        {
-            // ✅ CHECK: Email exists in Person table
-            var personExists = await _context.Persons
-                .AnyAsync(p =>
-                    p.Email.ToLower() == email.ToLower() &&
-                    p.IsActive && p.IsDeleted == false);
+//         // ---------------- Send verification code ----------------
+//         public async Task<SendCodeResult> SendVerificationCodeAsync(string email)
+//         {
+//             // ✅ CHECK: Email exists in Person table
+//             var personExists = await _context.Persons
+//                 .AnyAsync(p =>
+//                     p.Email.ToLower() == email.ToLower() &&
+//                     p.IsActive && p.IsDeleted == false);
 
-            if (!personExists)
-            {
-                return new SendCodeResult
-                {
-                    Success = false,
-                    Message = "This email is not registered in the system."
-                };
-            }
+//             if (!personExists)
+//             {
+//                 return new SendCodeResult
+//                 {
+//                     Success = false,
+//                     Message = "This email is not registered in the system."
+//                 };
+//             }
 
-            // ---------------- Existing verification logic ----------------
-            if (_verificationCodes.TryGetValue(email, out var existingData))
-            {
-                if (DateTime.Now < existingData.ExpiryTime)
-                {
-                    var timeSinceLastSend = DateTime.Now - existingData.LastSentTime;
+//             // ---------------- Existing verification logic ----------------
+//             if (_verificationCodes.TryGetValue(email, out var existingData))
+//             {
+//                 if (DateTime.Now < existingData.ExpiryTime)
+//                 {
+//                     var timeSinceLastSend = DateTime.Now - existingData.LastSentTime;
 
-                    if (timeSinceLastSend.TotalSeconds < RESEND_COOLDOWN_SECONDS)
-                    {
-                        var waitSeconds = RESEND_COOLDOWN_SECONDS - (int)timeSinceLastSend.TotalSeconds;
+//                     if (timeSinceLastSend.TotalSeconds < RESEND_COOLDOWN_SECONDS)
+//                     {
+//                         var waitSeconds = RESEND_COOLDOWN_SECONDS - (int)timeSinceLastSend.TotalSeconds;
 
-                        return new SendCodeResult
-                        {
-                            Success = false,
-                            Message = $"Please wait {waitSeconds} seconds before requesting a new code",
-                            WaitSeconds = waitSeconds
-                        };
-                    }
+//                         return new SendCodeResult
+//                         {
+//                             Success = false,
+//                             Message = $"Please wait {waitSeconds} seconds before requesting a new code",
+//                             WaitSeconds = waitSeconds
+//                         };
+//                     }
 
-                    if (existingData.ResendCount >= MAX_RESEND_ATTEMPTS)
-                    {
-                        return new SendCodeResult
-                        {
-                            Success = false,
-                            Message = "Maximum resend attempts reached. Please try again later.",
-                            MaxAttemptsReached = true
-                        };
-                    }
-                }
-                else
-                {
-                    _verificationCodes.TryRemove(email, out _);
-                }
-            }
+//                     if (existingData.ResendCount >= MAX_RESEND_ATTEMPTS)
+//                     {
+//                         return new SendCodeResult
+//                         {
+//                             Success = false,
+//                             Message = "Maximum resend attempts reached. Please try again later.",
+//                             MaxAttemptsReached = true
+//                         };
+//                     }
+//                 }
+//                 else
+//                 {
+//                     _verificationCodes.TryRemove(email, out _);
+//                 }
+//             }
 
-            string code = GenerateVerificationCode();
-            DateTime expiryTime = DateTime.Now.AddSeconds(CODE_EXPIRY_SECONDS);
+//             string code = GenerateVerificationCode();
+//             DateTime expiryTime = DateTime.Now.AddSeconds(CODE_EXPIRY_SECONDS);
 
-            int resendCount = 0;
-            if (_verificationCodes.TryGetValue(email, out var oldData))
-            {
-                if (DateTime.Now < oldData.ExpiryTime)
-                {
-                    resendCount = oldData.ResendCount + 1;
-                }
-            }
+//             int resendCount = 0;
+//             if (_verificationCodes.TryGetValue(email, out var oldData))
+//             {
+//                 if (DateTime.Now < oldData.ExpiryTime)
+//                 {
+//                     resendCount = oldData.ResendCount + 1;
+//                 }
+//             }
 
-            var verificationData = new VerificationData
-            {
-                Code = code,
-                ExpiryTime = expiryTime,
-                LastSentTime = DateTime.Now,
-                ResendCount = resendCount
-            };
+//             var verificationData = new VerificationData
+//             {
+//                 Code = code,
+//                 ExpiryTime = expiryTime,
+//                 LastSentTime = DateTime.Now,
+//                 ResendCount = resendCount
+//             };
 
-            _verificationCodes[email] = verificationData;
+//             _verificationCodes[email] = verificationData;
 
-            var emailDto = new EmailDto
-            {
-                To = email,
-                Subject = "Your Verification Code - Library System",
-                Body = $@"
-                Hello,
+//             var emailDto = new EmailDto
+//             {
+//                 To = email,
+//                 Subject = "Your Verification Code - Library System",
+//                 Body = $@"
+//                 Hello,
 
-                Your verification code is: {code}
+//                 Your verification code is: {code}
 
-                This code will expire in {CODE_EXPIRY_SECONDS} seconds.
+//                 This code will expire in {CODE_EXPIRY_SECONDS} seconds.
 
-                If you didn't request this code, please ignore this email.
+//                 If you didn't request this code, please ignore this email.
 
-                Best regards,
-                Coffee Management System"
-            };
+//                 Best regards,
+//                 Coffee Management System"
+//             };
 
-            await _gmailService.SendEmailAsync(emailDto);
+//             await _gmailService.SendEmailAsync(emailDto);
 
-            return new SendCodeResult
-            {
-                Success = true,
-                Message = "Verification code sent successfully",
-                Code = code, // ⚠ remove in production
-                ExpirySeconds = CODE_EXPIRY_SECONDS,
-                RemainingResends = MAX_RESEND_ATTEMPTS - resendCount
-            };
-        }
+//             return new SendCodeResult
+//             {
+//                 Success = true,
+//                 Message = "Verification code sent successfully",
+//                 Code = code, // ⚠ remove in production
+//                 ExpirySeconds = CODE_EXPIRY_SECONDS,
+//                 RemainingResends = MAX_RESEND_ATTEMPTS - resendCount
+//             };
+//         }
 
-        // ---------------- Verify code ----------------
-        public VerifyCodeResult VerifyCode(string email, string code)
-        {
-            if (!_verificationCodes.TryGetValue(email, out var storedData))
-            {
-                return new VerifyCodeResult
-                {
-                    Success = false,
-                    Message = "No verification code found for this email"
-                };
-            }
+//         // ---------------- Verify code ----------------
+//         public VerifyCodeResult VerifyCode(string email, string code)
+//         {
+//             if (!_verificationCodes.TryGetValue(email, out var storedData))
+//             {
+//                 return new VerifyCodeResult
+//                 {
+//                     Success = false,
+//                     Message = "No verification code found for this email"
+//                 };
+//             }
 
-            if (DateTime.Now > storedData.ExpiryTime)
-            {
-                _verificationCodes.TryRemove(email, out _);
-                return new VerifyCodeResult
-                {
-                    Success = false,
-                    Message = "Verification code has expired. Please request a new code.",
-                    IsExpired = true
-                };
-            }
+//             if (DateTime.Now > storedData.ExpiryTime)
+//             {
+//                 _verificationCodes.TryRemove(email, out _);
+//                 return new VerifyCodeResult
+//                 {
+//                     Success = false,
+//                     Message = "Verification code has expired. Please request a new code.",
+//                     IsExpired = true
+//                 };
+//             }
 
-            if (storedData.Code != code)
-            {
-                return new VerifyCodeResult
-                {
-                    Success = false,
-                    Message = "Invalid verification code"
-                };
-            }
+//             if (storedData.Code != code)
+//             {
+//                 return new VerifyCodeResult
+//                 {
+//                     Success = false,
+//                     Message = "Invalid verification code"
+//                 };
+//             }
 
-            _verificationCodes.TryRemove(email, out _);
-            return new VerifyCodeResult
-            {
-                Success = true,
-                Message = "Email verified successfully"
-            };
-        }
+//             _verificationCodes.TryRemove(email, out _);
+//             return new VerifyCodeResult
+//             {
+//                 Success = true,
+//                 Message = "Email verified successfully"
+//             };
+//         }
 
-        // ---------------- Remaining time ----------------
-        public TimeRemainingResult GetRemainingTime(string email)
-        {
-            if (!_verificationCodes.TryGetValue(email, out var storedData))
-            {
-                return new TimeRemainingResult
-                {
-                    HasCode = false,
-                    Message = "No verification code found"
-                };
-            }
+//         // ---------------- Remaining time ----------------
+//         public TimeRemainingResult GetRemainingTime(string email)
+//         {
+//             if (!_verificationCodes.TryGetValue(email, out var storedData))
+//             {
+//                 return new TimeRemainingResult
+//                 {
+//                     HasCode = false,
+//                     Message = "No verification code found"
+//                 };
+//             }
 
-            if (DateTime.Now > storedData.ExpiryTime)
-            {
-                _verificationCodes.TryRemove(email, out _);
-                return new TimeRemainingResult
-                {
-                    HasCode = false,
-                    Message = "Verification code has expired",
-                    IsExpired = true
-                };
-            }
+//             if (DateTime.Now > storedData.ExpiryTime)
+//             {
+//                 _verificationCodes.TryRemove(email, out _);
+//                 return new TimeRemainingResult
+//                 {
+//                     HasCode = false,
+//                     Message = "Verification code has expired",
+//                     IsExpired = true
+//                 };
+//             }
 
-            var remainingTime = storedData.ExpiryTime - DateTime.Now;
+//             var remainingTime = storedData.ExpiryTime - DateTime.Now;
 
-            return new TimeRemainingResult
-            {
-                HasCode = true,
-                RemainingSeconds = (int)remainingTime.TotalSeconds,
-                RemainingMinutes = (int)remainingTime.TotalMinutes,
-                Message = $"Code expires in {(int)remainingTime.TotalMinutes} minutes and {remainingTime.Seconds} seconds"
-            };
-        }
+//             return new TimeRemainingResult
+//             {
+//                 HasCode = true,
+//                 RemainingSeconds = (int)remainingTime.TotalSeconds,
+//                 RemainingMinutes = (int)remainingTime.TotalMinutes,
+//                 Message = $"Code expires in {(int)remainingTime.TotalMinutes} minutes and {remainingTime.Seconds} seconds"
+//             };
+//         }
 
-        // ---------------- Cleanup expired codes ----------------
-        public void CleanupExpiredCodes()
-        {
-            var now = DateTime.Now;
+//         // ---------------- Cleanup expired codes ----------------
+//         public void CleanupExpiredCodes()
+//         {
+//             var now = DateTime.Now;
 
-            var expiredKeys = _verificationCodes
-                .Where(x => x.Value.ExpiryTime < now)
-                .Select(x => x.Key)
-                .ToList();
+//             var expiredKeys = _verificationCodes
+//                 .Where(x => x.Value.ExpiryTime < now)
+//                 .Select(x => x.Key)
+//                 .ToList();
 
-            foreach (var key in expiredKeys)
-            {
-                _verificationCodes.TryRemove(key, out _);
-            }
-        }
-    }
+//             foreach (var key in expiredKeys)
+//             {
+//                 _verificationCodes.TryRemove(key, out _);
+//             }
+//         }
+//     }
 
-    // ---------------- Models ----------------
-    public class VerificationData
-    {
-        public string Code { get; set; } = string.Empty;
-        public DateTime ExpiryTime { get; set; }
-        public DateTime LastSentTime { get; set; }
-        public int ResendCount { get; set; }
-    }
+//     // ---------------- Models ----------------
+//     public class VerificationData
+//     {
+//         public string Code { get; set; } = string.Empty;
+//         public DateTime ExpiryTime { get; set; }
+//         public DateTime LastSentTime { get; set; }
+//         public int ResendCount { get; set; }
+//     }
 
-    public class SendCodeResult
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public string? Code { get; set; }
-        public int ExpirySeconds { get; set; }
-        public int RemainingResends { get; set; }
-        public int WaitSeconds { get; set; }
-        public bool MaxAttemptsReached { get; set; }
-    }
+//     public class SendCodeResult
+//     {
+//         public bool Success { get; set; }
+//         public string Message { get; set; } = string.Empty;
+//         public string? Code { get; set; }
+//         public int ExpirySeconds { get; set; }
+//         public int RemainingResends { get; set; }
+//         public int WaitSeconds { get; set; }
+//         public bool MaxAttemptsReached { get; set; }
+//     }
 
-    public class VerifyCodeResult
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public bool IsExpired { get; set; }
-    }
+//     public class VerifyCodeResult
+//     {
+//         public bool Success { get; set; }
+//         public string Message { get; set; } = string.Empty;
+//         public bool IsExpired { get; set; }
+//     }
 
-    public class TimeRemainingResult
-    {
-        public bool HasCode { get; set; }
-        public int RemainingSeconds { get; set; }
-        public int RemainingMinutes { get; set; }
-        public string Message { get; set; } = string.Empty;
-        public bool IsExpired { get; set; }
-    }
-}
+//     public class TimeRemainingResult
+//     {
+//         public bool HasCode { get; set; }
+//         public int RemainingSeconds { get; set; }
+//         public int RemainingMinutes { get; set; }
+//         public string Message { get; set; } = string.Empty;
+//         public bool IsExpired { get; set; }
+//     }
+// }

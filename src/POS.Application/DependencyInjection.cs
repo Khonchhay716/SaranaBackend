@@ -25,8 +25,9 @@ namespace POS.Application
 
             // Register Mapster
             services.AddMapster();
-            
-            services.AddScoped<GmailService>();
+
+            // services.AddScoped<GmailService>();
+            services.AddHttpClient<GmailService>();
             services.AddScoped<VerificationService>();
 
             return services;
