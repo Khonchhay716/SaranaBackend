@@ -12,7 +12,7 @@ namespace POS.Application.Features.SendMail
 
         public GmailService(IConfiguration config, HttpClient httpClient)
         {
-            _apiKey = config["Resend:ApiKey"] ?? throw new ArgumentNullException("Resend:ApiKey is missing");
+            _apiKey = config["Brevo:ApiKey"] ?? throw new ArgumentNullException("Brevo:ApiKey is missing");
             _httpClient = httpClient;
         }
 
@@ -26,17 +26,17 @@ namespace POS.Application.Features.SendMail
 
             var payload = new
             {
-                from = "Sarana System <onboarding@resend.dev>",
-                to = new[] { email.To.Trim() },
+                sender = new { name = "Sarana System", email = "khonchhay6@gmail.com" },
+                to = new[] { new { email = email.To.Trim() } },
                 subject = email.Subject,
-                text = email.Body ?? string.Empty
+                textContent = email.Body ?? string.Empty
             };
 
             var json = JsonSerializer.Serialize(payload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
-            request.Headers.Add("Authorization", $"Bearer {_apiKey}");
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.brevo.com/v3/smtp/email");
+            request.Headers.Add("api-key", _apiKey);
             request.Content = content;
 
             var response = await _httpClient.SendAsync(request);
@@ -44,7 +44,7 @@ namespace POS.Application.Features.SendMail
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Resend API error: {error}");
+                throw new Exception($"Brevo API error: {error}");
             }
         }
     }
