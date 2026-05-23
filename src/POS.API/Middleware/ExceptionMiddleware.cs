@@ -1,8 +1,9 @@
 using System.Net;
 using System.Text.Json;
-using FluentValidation;
 using POS.Application.Common.Dto;
-
+using POS.Application.Exceptions;
+using System.Linq; 
+//// file this get message error and convert message error no understand to we understand it ans is json message 
 namespace POS.API.Middleware
 {
     public class ExceptionMiddleware
@@ -39,12 +40,19 @@ namespace POS.API.Middleware
 
             switch (exception)
             {
-                case ValidationException validationException:
+                case ValidationException validationException: 
                     context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    var errorMessages = validationException.Errors.Select(e => e.ErrorMessage).ToList();
+                    var allErrors = validationException.Errors
+                        .SelectMany(e => e.Value)
+                        .ToList();
+                    
+                    var errorMessage = allErrors.Any() 
+                        ? string.Join(" | ", allErrors) 
+                        : "Validation failed";
+                    
                     response.Success = false;
-                    response.Message = "Validation failed";
-                    response.Data = new { Errors = errorMessages };
+                    response.Message = errorMessage;
+                    response.Data = new { Errors = validationException.Errors }; 
                     break;
 
                 default:

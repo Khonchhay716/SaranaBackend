@@ -1,6 +1,8 @@
 using FluentValidation;
 using MediatR;
+using POS.Application.Exceptions;
 
+//// file this use for get error ClassValidater in class which one and after get have it will send to file validationException 
 namespace POS.Application.Common.Behaviors
 {
     public class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
@@ -9,7 +11,7 @@ namespace POS.Application.Common.Behaviors
         private readonly IEnumerable<IValidator<TRequest>> _validators;
 
         public ValidationBehavior(IEnumerable<IValidator<TRequest>> validators)
-        {
+        { 
             _validators = validators;
         }
 
@@ -29,7 +31,7 @@ namespace POS.Application.Common.Behaviors
                     .ToList();
 
                 if (failures.Any())
-                    throw new ValidationException(failures);
+                    throw new Exceptions.ValidationException(failures); 
             }
             return await next();
         }

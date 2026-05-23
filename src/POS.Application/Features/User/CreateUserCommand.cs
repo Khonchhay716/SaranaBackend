@@ -7,7 +7,6 @@ using POS.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using PersonEntity = POS.Domain.Entities.Person;
@@ -25,9 +24,6 @@ namespace POS.Application.Features.User
         public int? CustomerId { get; set; }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Validator
-    // ─────────────────────────────────────────────────────────────────────────
     public class CreateUserCommandValidator : AbstractValidator<CreateUserCommand>
     {
         private readonly IMyAppDbContext _context;
@@ -36,7 +32,6 @@ namespace POS.Application.Features.User
         {
             _context = context;
 
-            // ── Username ──────────────────────────────────────────────────────
             RuleFor(x => x.Username)
                 .NotEmpty()
                     .WithMessage("Username is required.")
@@ -44,19 +39,17 @@ namespace POS.Application.Features.User
                     .WithMessage("Username must be at least 3 characters.")
                 .MaximumLength(50)
                     .WithMessage("Username must not exceed 50 characters.")
-                .MustAsync(BeUniqueUsername)
+                .MustAsync(async (username, cancellationToken) => !await _context.Persons.AnyAsync(p => p.Username == username && !p.IsDeleted, cancellationToken))
                     .WithMessage("Username already exists. Please choose a different username.");
 
-            // ── Email ─────────────────────────────────────────────────────────
             RuleFor(x => x.Email)
                 .NotEmpty()
                     .WithMessage("Email is required.")
                 .EmailAddress()
                     .WithMessage("Invalid email format. Example: example@mail.com")
-                .MustAsync(BeUniqueEmail)
+                .MustAsync(async (email, cancellationToken) => !await _context.Persons.AnyAsync(p => p.Email == email && !p.IsDeleted, cancellationToken))
                     .WithMessage("Email already exists. Please use a different email address.");
 
-            // ── Password ──────────────────────────────────────────────────────
             RuleFor(x => x.Password)
                 .NotEmpty()
                     .WithMessage("Password is required.")
@@ -69,71 +62,41 @@ namespace POS.Application.Features.User
                 .Matches(@"\d")
                     .WithMessage("Password must contain at least one number (0-9).")
                 .Matches(@"[!@#$%^&*]")
-                    .WithMessage("Password must contain at least one special character (!@#$%^&*).");
+                    .WithMessage("Password must contain at least one special character (!@#$%^&*).");    
 
-            // ── Roles ─────────────────────────────────────────────────────────
             RuleFor(x => x.RoleIds)
                 .NotNull()
                     .WithMessage("Role list is required.");
 
             RuleForEach(x => x.RoleIds)
-                .MustAsync(RoleExists)
+                .MustAsync(async (roleId, cancellationToken) => await _context.Roles.AnyAsync(r => r.Id == roleId && !r.IsDeleted, cancellationToken))
                     .WithMessage("One or more role IDs are invalid or have been deleted.");
 
-            // ── Staff / Customer mutual exclusion ─────────────────────────────
             RuleFor(x => x)
                 .Must(x => !(x.StaffId.HasValue && x.CustomerId.HasValue))
                     .WithMessage("Cannot assign both Staff and Customer to the same user. Please select only one.")
                     .OverridePropertyName("StaffId");
 
-            // ── StaffId ───────────────────────────────────────────────────────
             When(x => x.StaffId.HasValue, () =>
             {
                 RuleFor(x => x.StaffId!.Value)
-                    .MustAsync(StaffExists)
+                    .MustAsync(async (staffId, cancellationToken) => await _context.Staffs.AnyAsync(s => s.Id == staffId && !s.IsDeleted , cancellationToken))
                         .WithMessage("Staff not found. Please provide a valid Staff ID.")
-                    .MustAsync(StaffNotLinked)
+                    .MustAsync(async (staffId, cancellationToken) => !await _context.Persons.AnyAsync(p => p.StaffId == staffId, cancellationToken))
                         .WithMessage("This Staff is already linked to another user.");
             });
 
-            // ── CustomerId ────────────────────────────────────────────────────
             When(x => x.CustomerId.HasValue, () =>
             {
                 RuleFor(x => x.CustomerId!.Value)
-                    .MustAsync(CustomerExists)
+                    .MustAsync(async (customerId, cancellationToken) => await _context.Customers.AnyAsync(c => c.Id == customerId && !c.IsDeleted, cancellationToken))
                         .WithMessage("Customer not found. Please provide a valid Customer ID.")
-                    .MustAsync(CustomerNotLinked)
+                    .MustAsync(async (customerId, cancellationToken) => !await _context.Persons.AnyAsync(p => p.CustomerId == customerId, cancellationToken))
                         .WithMessage("This Customer is already linked to another user.");
             });
         }
-
-        // ── Helpers ───────────────────────────────────────────────────────────
-
-        private async Task<bool> BeUniqueUsername(string username, CancellationToken ct)
-            => !await _context.Persons.AnyAsync(p => p.Username == username && !p.IsDeleted, ct);
-
-        private async Task<bool> BeUniqueEmail(string email, CancellationToken ct)
-            => !await _context.Persons.AnyAsync(p => p.Email == email && !p.IsDeleted, ct);
-
-        private async Task<bool> RoleExists(int roleId, CancellationToken ct)
-            => await _context.Roles.AnyAsync(r => r.Id == roleId && !r.IsDeleted, ct);
-
-        private async Task<bool> StaffExists(int staffId, CancellationToken ct)
-            => await _context.Staffs.AnyAsync(s => s.Id == staffId && !s.IsDeleted, ct);
-
-        private async Task<bool> StaffNotLinked(int staffId, CancellationToken ct)
-            => !await _context.Persons.AnyAsync(p => p.StaffId == staffId, ct);
-
-        private async Task<bool> CustomerExists(int customerId, CancellationToken ct)
-            => await _context.Customers.AnyAsync(c => c.Id == customerId && !c.IsDeleted, ct);
-
-        private async Task<bool> CustomerNotLinked(int customerId, CancellationToken ct)
-            => !await _context.Persons.AnyAsync(p => p.CustomerId == customerId, ct);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Handler
-    // ─────────────────────────────────────────────────────────────────────────
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, ApiResponse<UserInfo>>
     {
         private readonly IMyAppDbContext _context;
@@ -147,111 +110,18 @@ namespace POS.Application.Features.User
 
         public async Task<ApiResponse<UserInfo>> Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            // ── 1. Username: empty + length ───────────────────────────────────
-            var username = request.Username?.Trim() ?? "";
-            if (string.IsNullOrWhiteSpace(username))
-                return ApiResponse<UserInfo>.BadRequest("Username is required.");
-            if (username.Length < 3)
-                return ApiResponse<UserInfo>.BadRequest("Username must be at least 3 characters.");
-            if (username.Length > 50)
-                return ApiResponse<UserInfo>.BadRequest("Username must not exceed 50 characters.");
-
-            // ── 2. Username: uniqueness ───────────────────────────────────────
-            var isDuplicateUsername = await _context.Persons
-                .AnyAsync(p => p.Username == username && !p.IsDeleted, cancellationToken);
-            if (isDuplicateUsername)
-                return ApiResponse<UserInfo>.BadRequest("Username already exists. Please choose a different username.");
-
-            // ── 3. Email: empty + format ──────────────────────────────────────
-            var email = request.Email?.Trim() ?? "";
-            if (string.IsNullOrWhiteSpace(email))
-                return ApiResponse<UserInfo>.BadRequest("Email is required.");
-            if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-                return ApiResponse<UserInfo>.BadRequest("Invalid email format. Example: example@mail.com");
-
-            // ── 4. Email: uniqueness ──────────────────────────────────────────
-            var isDuplicateEmail = await _context.Persons
-                .AnyAsync(p => p.Email == email && !p.IsDeleted, cancellationToken);
-            if (isDuplicateEmail)
-                return ApiResponse<UserInfo>.BadRequest("Email already exists. Please use a different email address.");
-
-            // ── 5. Password: all complexity rules ─────────────────────────────
-            var password = request.Password?.Trim() ?? "";
-            if (string.IsNullOrWhiteSpace(password))
-                return ApiResponse<UserInfo>.BadRequest("Password is required.");
-            if (password.Length < 8)
-                return ApiResponse<UserInfo>.BadRequest("Password must be at least 8 characters.");
-            if (!Regex.IsMatch(password, "[A-Z]"))
-                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one uppercase letter (A-Z).");
-            if (!Regex.IsMatch(password, "[a-z]"))
-                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one lowercase letter (a-z).");
-            if (!Regex.IsMatch(password, @"\d"))
-                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one number (0-9).");
-            if (!Regex.IsMatch(password, @"[!@#$%^&*]"))
-                return ApiResponse<UserInfo>.BadRequest("Password must contain at least one special character (!@#$%^&*).");
-
-            // ── 6. Cannot pick both Staff and Customer ────────────────────────
-            if (request.StaffId.HasValue && request.CustomerId.HasValue)
-                return ApiResponse<UserInfo>.BadRequest("Cannot assign both Staff and Customer to the same user. Please select only one.");
-
-            // ── 7. Roles: validate all exist ──────────────────────────────────
-            if (request.RoleIds.Any())
-            {
-                var validRoleIds = await _context.Roles
-                    .Where(r => request.RoleIds.Contains(r.Id) && !r.IsDeleted)
-                    .Select(r => r.Id)
-                    .ToListAsync(cancellationToken);
-
-                var invalidRoleIds = request.RoleIds.Except(validRoleIds).ToList();
-                if (invalidRoleIds.Any())
-                    return ApiResponse<UserInfo>.BadRequest(
-                        $"Invalid role IDs: {string.Join(", ", invalidRoleIds)}. Please provide valid role IDs.");
-            }
-
-            // ── 8. StaffId: exists + not linked ──────────────────────────────
-            if (request.StaffId.HasValue)
-            {
-                var staffExists = await _context.Staffs
-                    .AnyAsync(s => s.Id == request.StaffId.Value && !s.IsDeleted, cancellationToken);
-                if (!staffExists)
-                    return ApiResponse<UserInfo>.BadRequest(
-                        $"Staff with ID {request.StaffId.Value} not found. Please provide a valid Staff ID.");
-
-                var staffLinked = await _context.Persons
-                    .AnyAsync(p => p.StaffId == request.StaffId.Value, cancellationToken);
-                if (staffLinked)
-                    return ApiResponse<UserInfo>.BadRequest(
-                        $"Staff with ID {request.StaffId.Value} is already linked to another user.");
-            }
-
-            // ── 9. CustomerId: exists + not linked ────────────────────────────
-            if (request.CustomerId.HasValue)
-            {
-                var customerExists = await _context.Customers
-                    .AnyAsync(c => c.Id == request.CustomerId.Value && !c.IsDeleted, cancellationToken);
-                if (!customerExists)
-                    return ApiResponse<UserInfo>.BadRequest(
-                        $"Customer with ID {request.CustomerId.Value} not found. Please provide a valid Customer ID.");
-
-                var customerLinked = await _context.Persons
-                    .AnyAsync(p => p.CustomerId == request.CustomerId.Value, cancellationToken);
-                if (customerLinked)
-                    return ApiResponse<UserInfo>.BadRequest(
-                        $"Customer with ID {request.CustomerId.Value} is already linked to another user.");
-            }
-
-            // ── 10. Determine PersonType ──────────────────────────────────────
+            // Determine PersonType
             var personType = request.StaffId.HasValue ? PersonType.Staff
                            : request.CustomerId.HasValue ? PersonType.Customer
                            : PersonType.None;
 
-            // ── 11. Hash password + create Person ─────────────────────────────
-            var hashedPassword = _passwordHasher.HashPassword(password);
+            // Hash password
+            var hashedPassword = _passwordHasher.HashPassword(request.Password.Trim());
 
             var person = new PersonEntity
             {
-                Username = username,
-                Email = email,
+                Username = request.Username.Trim(),
+                Email = request.Email.Trim(),
                 PasswordHash = hashedPassword,
                 IsActive = request.IsActive,
                 Type = personType,
@@ -260,7 +130,6 @@ namespace POS.Application.Features.User
                 CreatedDate = DateTime.UtcNow
             };
 
-            // ── 12. Save Person — catch any FK violation ──────────────────────
             try
             {
                 _context.Persons.Add(person);
@@ -280,7 +149,7 @@ namespace POS.Application.Features.User
                     "Failed to save user. Please check your input and try again.");
             }
 
-            // ── 13. Assign roles ──────────────────────────────────────────────
+            // Assign roles
             if (request.RoleIds.Any())
             {
                 var personRoles = request.RoleIds
@@ -294,7 +163,7 @@ namespace POS.Application.Features.User
                 await _context.SaveChangesAsync(cancellationToken);
             }
 
-            // ── 14. Load roles for response ───────────────────────────────────
+            // Load roles for response
             var roles = await _context.Roles
                 .Where(r => request.RoleIds.Contains(r.Id) && !r.IsDeleted)
                 .Select(r => new RoleBasicInfo
@@ -305,7 +174,7 @@ namespace POS.Application.Features.User
                 })
                 .ToListAsync(cancellationToken);
 
-            // ── 15. Load Staff info ───────────────────────────────────────────
+            // Load Staff info
             StaffInfo? staffInfo = null;
             if (request.StaffId.HasValue)
             {
@@ -318,12 +187,13 @@ namespace POS.Application.Features.User
                         LastName = s.LastName,
                         PhoneNumber = s.PhoneNumber,
                         Position = s.Position,
-                        Salary = s.Salary
+                        Salary = s.Salary,
+                        ImageProfile = s.ImageProfile
                     })
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            // ── 16. Load Customer info ────────────────────────────────────────
+            // Load Customer info
             CustomerInfo? customerInfo = null;
             if (request.CustomerId.HasValue)
             {
@@ -335,12 +205,12 @@ namespace POS.Application.Features.User
                         FirstName = c.FirstName,
                         LastName = c.LastName,
                         PhoneNumber = c.PhoneNumber,
-                        TotalPoint = c.TotalPoint
+                        TotalPoint = c.TotalPoint,
+                        ImageProfile = c.ImageProfile
                     })
                     .FirstOrDefaultAsync(cancellationToken);
             }
 
-            // ── 17. Build + return response ───────────────────────────────────
             var userInfo = new UserInfo
             {
                 Id = person.Id,

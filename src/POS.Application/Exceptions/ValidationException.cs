@@ -1,21 +1,21 @@
-/// file for prepare message error to ui when have error 
-using FluentValidation.Results;
+/// file this is use for analysis 
+using FluentValidation.Results; 
 
-namespace POS.Application.Exceptions;
+namespace POS.Application.Exceptions; 
 
-public class ValidationException : Exception
+public class ValidationException : Exception 
 {
-    public IDictionary<string, string[]> Errors { get; }
+    public IDictionary<string, string[]> Errors { get; } 
 
-    public ValidationException() : base("One or more validation failures have occurred.")
+    public ValidationException() : base("One or more validation failures have occurred.") 
     {
         Errors = new Dictionary<string, string[]>();
-    }
-
-    public ValidationException(IEnumerable<ValidationFailure> failures) : this()
+    } 
+ 
+    public ValidationException(IEnumerable<ValidationFailure> failures) : this()  
     {
-        Errors = failures
-            .GroupBy(e => e.PropertyName, e => e.ErrorMessage)
-            .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray());
+        Errors = failures 
+            .GroupBy(e => e.PropertyName, e => e.ErrorMessage) 
+            .ToDictionary(failureGroup => failureGroup.Key, failureGroup => failureGroup.ToArray()); 
     }
 }

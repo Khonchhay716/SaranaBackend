@@ -3,6 +3,7 @@ using POS.Infrastructure;
 using POS.Infrastructure.Data;
 using POS.Application.Common.Interfaces;
 using POS.API;
+using POS.API.Middleware;
 using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
 
 var app = builder.Build();
+app.UseMiddleware<ExceptionMiddleware>(); 
 
 // Create Uploads folder 
 var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads");
