@@ -18,11 +18,16 @@ namespace POS.Application.Features.Branch
 
     public class BranchCreateCommandValidator : AbstractValidator<BranchCreateCommand>
     {
-        public BranchCreateCommandValidator()
+        private readonly IMyAppDbContext _context;
+        public BranchCreateCommandValidator(IMyAppDbContext context)
         {
+            _context = context;
             RuleFor(x => x.BranchName)
                 .NotEmpty().WithMessage("Branch name is required.")
-                .MaximumLength(200);
+                .MaximumLength(200).WithMessage("Branch Max Length is only 200 Chracter")
+                .MinimumLength(3).WithMessage("Branch atleast 3 character")
+                .MustAsync(async (BranchName, cancellationToken) => !await _context.Branches.AnyAsync(x => x.BranchName.ToLower() == BranchName.ToLower() && !x.IsDeleted))
+                .WithMessage((x) => $"Branch name '{x.BranchName}' already exists");
 
             RuleFor(x => x.Status)
                 .Must(s => s == "Active" || s == "Inactive")
@@ -39,26 +44,13 @@ namespace POS.Application.Features.Branch
             _context = context;
         }
 
-        public async Task<ApiResponse<BranchInfo>> Handle(
-            BranchCreateCommand request,
-            CancellationToken cancellationToken)
+        public async Task<ApiResponse<BranchInfo>> Handle( BranchCreateCommand request, CancellationToken cancellationToken)
         {
-            // 1. Validate
-            var validator = new BranchCreateCommandValidator();
-            var validationResult = validator.Validate(request);
-            if (!validationResult.IsValid)
-            {
-                var errors = string.Join(", ", validationResult.Errors.Select(e => e.ErrorMessage));
-                return ApiResponse<BranchInfo>.BadRequest(errors);
-            }
-
-            // 2. Duplicate name check
             var nameExists = await _context.Branches
                 .AnyAsync(b => b.BranchName == request.BranchName && !b.IsDeleted, cancellationToken);
             if (nameExists)
                 return ApiResponse<BranchInfo>.BadRequest($"Branch name '{request.BranchName}' already exists.");
 
-            // 3. Create
             var branch = new DomainBranch
             {
                 BranchName = request.BranchName,
@@ -70,7 +62,7 @@ namespace POS.Application.Features.Branch
             _context.Branches.Add(branch);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return ApiResponse<BranchInfo>.Created(branch.Adapt<BranchInfo>(), "Branch created successfully");
+            return ApiResponse<BranchInfo>.Ok(branch.Adapt<BranchInfo>(), "Branch created successfully");
         }
     }
 }

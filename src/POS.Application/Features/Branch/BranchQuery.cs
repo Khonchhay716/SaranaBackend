@@ -24,7 +24,7 @@ namespace POS.Application.Features.Branch
         }
 
         public async Task<ApiResponse<BranchInfo>> Handle(
-            BranchQuery       request,
+            BranchQuery request,
             CancellationToken cancellationToken)
         {
             var branch = await _context.Branches
@@ -41,8 +41,6 @@ namespace POS.Application.Features.Branch
     public class BranchListQuery : PaginationRequest, IRequest<PaginatedResult<BranchInfo>>
     {
         public string? Search { get; set; }
-
-        /// <summary>Filter by status: "Active" | "Inactive" | null = all</summary>
         public string? Status { get; set; }
     }
 
@@ -64,19 +62,13 @@ namespace POS.Application.Features.Branch
             _context = context;
         }
 
-        public async Task<PaginatedResult<BranchInfo>> Handle(
-            BranchListQuery   request,
-            CancellationToken cancellationToken)
+        public async Task<PaginatedResult<BranchInfo>> Handle( BranchListQuery request, CancellationToken cancellationToken)
         {
-            var query = _context.Branches
-                .Where(b => !b.IsDeleted)
-                .AsNoTracking();
+            var query = _context.Branches.Where(b => !b.IsDeleted).AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
-                query = query.Where(b =>
-                    b.BranchName.Contains(request.Search) ||
-                    (b.Description != null && b.Description.Contains(request.Search)));
+                query = query.Where(b => b.BranchName.Contains(request.Search) || (b.Description != null && b.Description.Contains(request.Search)));
             }
 
             if (!string.IsNullOrWhiteSpace(request.Status))
@@ -86,18 +78,11 @@ namespace POS.Application.Features.Branch
 
             var projected = query.Select(b => new BranchInfo
             {
-                Id          = b.Id,
-                BranchName  = b.BranchName,
-                Logo        = b.Logo,
-                Status      = b.Status,
+                Id = b.Id,
+                BranchName = b.BranchName,
+                Logo = b.Logo,
+                Status = b.Status,
                 Description = b.Description,
-                IsDeleted   = b.IsDeleted,
-                CreatedDate = b.CreatedDate,
-                CreatedBy   = b.CreatedBy,
-                UpdatedDate = b.UpdatedDate,
-                UpdatedBy   = b.UpdatedBy,
-                DeletedDate = b.DeletedDate,
-                DeletedBy   = b.DeletedBy,
             });
 
             return await projected.ToPaginatedResultAsync(request.Page, request.PageSize);

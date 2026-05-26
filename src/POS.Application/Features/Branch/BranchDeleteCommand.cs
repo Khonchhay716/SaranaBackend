@@ -16,9 +16,7 @@ namespace POS.Application.Features.Branch
             _context = context;
         }
 
-        public async Task<ApiResponse<bool>> Handle(
-            BranchDeleteCommand request,
-            CancellationToken   cancellationToken)
+        public async Task<ApiResponse<bool>> Handle( BranchDeleteCommand request, CancellationToken   cancellationToken)
         {
             var branch = await _context.Branches
                 .FirstOrDefaultAsync(b => b.Id == request.Id && !b.IsDeleted, cancellationToken);
