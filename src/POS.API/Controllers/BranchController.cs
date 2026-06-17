@@ -69,7 +69,7 @@ namespace POS.API.Controllers
         [RequirePermission("branch:delete")]
         public async Task<IActionResult> Delete(int id, CancellationToken ct)
         {
-            var result = await _mediator.Send(new BranchDeleteCommand(id), ct);
+            var result = await _mediator.Send(new BranchDeleteCommand{Id = id}, ct);
             return result.Success ? Ok(result) : NotFound(result);
         }
     }

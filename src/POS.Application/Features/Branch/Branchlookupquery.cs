@@ -6,11 +6,6 @@ using POS.Application.Common.Interfaces;
 
 namespace POS.Application.Features.Branch
 {
-    public class BranchInfoLookup
-    {
-        public int    Id         { get; set; }
-        public string BranchName { get; set; } = string.Empty;
-    }
 
     public class BranchLookupListQuery : PaginationRequest, IRequest<PaginatedResult<BranchInfoLookup>>
     {
@@ -29,7 +24,7 @@ namespace POS.Application.Features.Branch
         public async Task<PaginatedResult<BranchInfoLookup>> Handle(BranchLookupListQuery request, CancellationToken cancellationToken)
         {
             var query = _context.Branches
-                .Where(b => !b.IsDeleted && b.Status == "Active") 
+                .Where(b => !b.IsDeleted && b.Status == "Active")
                 .AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(request.Search))
@@ -43,7 +38,7 @@ namespace POS.Application.Features.Branch
 
             var projectedQuery = query.Select(b => new BranchInfoLookup
             {
-                Id         = b.Id,
+                Id = b.Id,
                 BranchName = b.BranchName,
             });
 

@@ -9,4 +9,10 @@ namespace POS.Application.Features.Branch
         public string? Description { get; set; }
 
     }
+
+    public class BranchInfoLookup
+    {
+        public int Id { get; set; }
+        public string BranchName { get; set; } = string.Empty;
+    }
 }
