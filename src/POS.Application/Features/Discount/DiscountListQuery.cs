@@ -73,7 +73,7 @@ namespace POS.Application.Features.Discount
                 StartDate = d.StartDate,
                 EndDate = d.EndDate,
                 IsActive = d.IsActive,
-                IsGlobal = !d.ProductDiscounts.Any(pd => !pd.IsDeleted),
+                IsAllProducts = d.IsAllProducts,
                 IsDeleted = d.IsDeleted,
                 CreatedDate = d.CreatedDate,
                 CreatedBy = d.CreatedBy,
@@ -86,9 +86,9 @@ namespace POS.Application.Features.Discount
                         ProductDiscountId = pd.Id,
                         ProductId = pd.ProductId,
                         ProductName = pd.Product.Name,
-                        ProductSKU = pd.Product.SKU,
-                        ImageProduct = pd.Product.ImageProduct,
-                        Price = pd.Product.Price,
+                        ProductCode = pd.Product.Code,
+                        ImageUrl = pd.Product.ImageUrl,
+                        SalePrice = pd.Product.SalePrice,
                     }).ToList(),
             });
 

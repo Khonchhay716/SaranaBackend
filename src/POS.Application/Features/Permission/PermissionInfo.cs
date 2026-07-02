@@ -19,9 +19,6 @@ namespace POS.Application.Features.Permission
     {
         public static readonly List<StaticPermission> Permissions = new()
         {
-            // permission
-            // new StaticPermission { Name = "permission:read", Description = "view or list permission", Category = "Permission" },
-
             // role
             new StaticPermission { Name = "role:list", Description = "list role", Category = "Roles" },
             new StaticPermission { Name = "role:create", Description = "Create role", Category = "Roles" },
@@ -31,7 +28,6 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "role:assign-permissions", Description = "Assign permissions to role", Category = "Roles" },
 
             // user 
-            // new StaticPermission { Name = "user:lookup", Description = "lookup User", Category = "Users" },
             new StaticPermission { Name = "user:list", Description = "list User", Category = "Users" },
             new StaticPermission { Name = "user:create", Description = "Create User", Category = "Users" },
             new StaticPermission { Name = "user:read", Description = "Read User details", Category = "Users" },
@@ -40,7 +36,6 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "user:assign-roles", Description = "Assign roles to User", Category = "Users" },
 
             // category 
-            // new StaticPermission { Name = "category:lookup", Description = "Lookup category", Category = "Category" },
             new StaticPermission { Name = "category:create", Description = "Create category", Category = "Category" },
             new StaticPermission { Name = "category:read", Description = "List category", Category = "Category" },
             new StaticPermission { Name = "category:update", Description = "Update category", Category = "Category" },
@@ -48,7 +43,6 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "category:view", Description = "View category detail", Category = "Category" },
 
             // product
-            // new StaticPermission { Name = "product:sale_pos", Description = "Sale Product at POS", Category = "Products" },
             new StaticPermission { Name = "product:create", Description = "Create product", Category = "Products" },
             new StaticPermission { Name = "product:read", Description = "List product", Category = "Products" },
             new StaticPermission { Name = "product:update", Description = "Update product", Category = "Products" },
@@ -110,13 +104,28 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "discount:delete", Description = "Delete Discount", Category = "Discount" },
             new StaticPermission { Name = "discount:view", Description = "View Discount Detail", Category = "Discount" },
 
-            // manage stock
-            new StaticPermission { Name = "manage_stock:all", Description = "Manage Stock", Category = "Manage_Stock" },
-
             // point setting
             new StaticPermission { Name = "point_setting:view", Description = "View Point Setting", Category = "Point_Setting" },
             new StaticPermission { Name = "point_setting:update", Description = "Update Point Setting", Category = "Point_Setting" },
 
+            new StaticPermission { Name = "supplier:create", Description = "Create Supplier", Category = "Supplier" },
+            new StaticPermission { Name = "supplier:read", Description = "List Supplier", Category = "Supplier" },
+            new StaticPermission { Name = "supplier:update", Description = "Update Supplier", Category = "Supplier" },
+            new StaticPermission { Name = "supplier:delete", Description = "Delete Supplier", Category = "Supplier" },
+            new StaticPermission { Name = "supplier:view", Description = "View Supplier Detail", Category = "Supplier" },
+
+            new StaticPermission { Name = "adjustment:create", Description = "Create Adjustment", Category = "Adjustment" },
+            new StaticPermission { Name = "adjustment:read", Description = "List Adjustment", Category = "Adjustment" },
+            new StaticPermission { Name = "adjustment:view", Description = "View Adjustment Detail", Category = "Adjustment" },
+
+            new StaticPermission { Name = "stockmovement:create", Description = "Create StockMovement", Category = "StockMovement" },
+            new StaticPermission { Name = "stockmovement:read", Description = "List StockMovement", Category = "StockMovement" },
+            new StaticPermission { Name = "stockmovement:view", Description = "View StockMovement Detail", Category = "StockMovement" },
+
+            new StaticPermission { Name = "stockreturn:create", Description = "Create StockReturn", Category = "StockReturn" },
+            new StaticPermission { Name = "stockreturn:read", Description = "List StockReturn", Category = "StockReturn" },
+            new StaticPermission { Name = "stockreturn:view", Description = "View StockReturn Detail", Category = "StockReturn" },
+            new StaticPermission { Name = "stockreturn:cancel", Description = "Cancel StockReturn", Category = "StockReturn" },
         };
     }
 }

@@ -21,6 +21,7 @@ namespace POS.Application.Features.Discount
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? EndDate { get; set; }
         public bool IsActive { get; set; } = true;
+        public bool IsAllProducts { get; set; } = false;
         public List<int> ProductIds { get; set; } = new();
     }
 
@@ -85,6 +86,7 @@ namespace POS.Application.Features.Discount
             discount.StartDate = request.StartDate;
             discount.EndDate = request.EndDate;
             discount.IsActive = request.IsActive;
+            discount.IsAllProducts = request.IsAllProducts;
             discount.UpdatedDate = DateTimeOffset.UtcNow;
 
             // Replace product list — soft delete all existing, add new ones

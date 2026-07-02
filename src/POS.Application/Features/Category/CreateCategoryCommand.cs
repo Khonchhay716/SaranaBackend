@@ -29,10 +29,12 @@ namespace POS.Application.Features.Category
     public class CreateCategoryCommandHandler : IRequestHandler<CreateCategoryCommand, ApiResponse<CategoryInfo>>
     {
         private readonly IMyAppDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CreateCategoryCommandHandler(IMyAppDbContext context)
+        public CreateCategoryCommandHandler(IMyAppDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ApiResponse<CategoryInfo>> Handle(CreateCategoryCommand request, CancellationToken cancellationToken)
@@ -44,7 +46,7 @@ namespace POS.Application.Features.Category
 
             var category = request.Adapt<Domain.Entities.Category>();
             category.CreatedDate = DateTimeOffset.UtcNow;
-            category.IsDeleted = false;
+            category.CreatedBy = _currentUserService.UserId;
 
             _context.Categories.Add(category);
             await _context.SaveChangesAsync(cancellationToken);

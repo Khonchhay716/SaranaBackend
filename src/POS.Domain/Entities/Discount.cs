@@ -1,4 +1,5 @@
 using POS.Domain.Common;
+using POS.Domain.Entities.StockManagement;
 
 namespace POS.Domain.Entities
 {

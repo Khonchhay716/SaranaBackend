@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,14 +13,14 @@ namespace POS.Infrastructure
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
             // Add PostgreSQL DbContext
-            services.AddDbContext<MyAppDbContext>(options => 
+            services.AddDbContext<MyAppDbContext>(options =>
                 options.UseNpgsql(
-                    configuration.GetConnectionString("DefaultConnection"), 
+                    configuration.GetConnectionString("DefaultConnection"),
                     b =>
                     {
-                        b.MigrationsAssembly(typeof(MyAppDbContext).Assembly.FullName); 
-                        b.MigrationsHistoryTable("__EFMigrationsHistory", "pos"); 
-                    })); 
+                        b.MigrationsAssembly(typeof(MyAppDbContext).Assembly.FullName);
+                        b.MigrationsHistoryTable("__EFMigrationsHistory", "pos");
+                    }));
 
             // Register the DbContext interface for DI
             services.AddScoped<IMyAppDbContext>(provider =>
@@ -28,6 +29,7 @@ namespace POS.Infrastructure
             services.AddScoped<ICurrentUserService, CurrentUserService>();
             services.AddScoped<IJwtService, JwtService>();
             services.AddScoped<IPasswordHasher, PasswordHasher>();
+            services.AddScoped<IClaimsTransformation, PermissionClaimsTransformation>();
 
             return services;
         }

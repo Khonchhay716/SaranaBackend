@@ -11,7 +11,7 @@ namespace POS.Application.Features.Customer
         public int Id { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public int TotalPoint { get; set; }
+        public decimal TotalPoint { get; set; }
     }
 
     public class CustomerLookupListQuery : PaginationRequest, IRequest<PaginatedResult<CustomerInfoLookup>>

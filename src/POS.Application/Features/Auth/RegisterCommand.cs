@@ -145,7 +145,8 @@ namespace POS.Application.Features.Auth
                 .ToList() ?? new List<string>();
 
             // 7. Generate Tokens
-            var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, userPermissions);
+            // var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, userPermissions);
+            var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
             // 8. Save Refresh Token

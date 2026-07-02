@@ -47,7 +47,7 @@ namespace POS.Application.Features.User
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public int TotalPoint { get; set; }
+        public decimal TotalPoint { get; set; }
         public string ImageProfile { get; set; } = string.Empty;
     }
 

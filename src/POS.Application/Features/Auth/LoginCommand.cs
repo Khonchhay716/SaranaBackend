@@ -79,7 +79,8 @@ namespace POS.Application.Features.Auth
                 .Distinct()
                 .ToList();
 
-            var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, permissions);
+            // var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, permissions);
+            var accessToken = _jwtService.GenerateAccessToken(person.Id, person.Username);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
             // Revoke old refresh tokens

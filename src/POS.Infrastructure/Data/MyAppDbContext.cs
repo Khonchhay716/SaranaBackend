@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using POS.Domain.Entities;
+using POS.Domain.Entities.StockManagement;
 using POS.Domain.Common;
 using POS.Application.Common.Interfaces;
+using POS.Domain.Enums;
 
 namespace POS.Infrastructure.Data
 {
@@ -18,24 +20,29 @@ namespace POS.Infrastructure.Data
         public DbSet<Person> Persons { get; set; }
         public DbSet<Staff> Staffs { get; set; }
         public DbSet<Customer> Customers { get; set; }
-        public DbSet<Role> Roles { get; set; } 
-        public DbSet<Permission> Permissions { get; set; } 
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<Permission> Permissions { get; set; }
         public DbSet<PersonRole> PersonRoles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<Branch> Branches { get; set; }
-        public DbSet<Product> Products { get; set; } 
-        public DbSet<SerialNumber> SerialNumbers { get; set; } 
-        public DbSet<StockMovement> StockMovements { get; set; } 
-        public DbSet<Order> Orders { get; set; } 
-        public DbSet<OrderItem> OrderItems { get; set; } 
-        public DbSet<Discount> Discounts { get; set; } 
-        public DbSet<ProductDiscount> ProductDiscounts { get; set; } 
-        public DbSet<LeaveType> LeaveTypes { get; set; } 
+        public DbSet<Discount> Discounts { get; set; }
+        public DbSet<ProductDiscount> ProductDiscounts { get; set; }
+        public DbSet<LeaveType> LeaveTypes { get; set; }
         public DbSet<LeaveRequest> LeaveRequests { get; set; }
-        public DbSet<LeaveBalance> LeaveBalances { get; set; } 
+        public DbSet<LeaveBalance> LeaveBalances { get; set; }
         public DbSet<PointSetup> PointSetups { get; set; }
+
+        public DbSet<Supplier> Suppliers { get; set; }
+        public DbSet<Product> Products { get; set; }
+        public DbSet<SerialStock> SerialStocks { get; set; }
+        public DbSet<NonSerialStock> NonSerialStocks { get; set; }
+        public DbSet<StockMovement> StockMovements { get; set; }
+        public DbSet<StockAdjustment> StockAdjustments { get; set; }
+        public DbSet<StockReturn> StockReturns { get; set; }
+        public DbSet<StockReturnItem> StockReturnItems { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
 
         // ----------------- SaveChanges -----------------
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -209,182 +216,6 @@ namespace POS.Infrastructure.Data
                       .HasColumnType("text");
             });
 
-            builder.Entity<Branch>(entity =>
-            {
-                entity.ToTable("branches");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.BranchName)
-                    .HasMaxLength(200)
-                    .IsRequired();
-                entity.Property(x => x.Logo)
-                    .HasColumnType("text");
-                entity.Property(x => x.Status)
-                    .HasMaxLength(20)
-                    .HasDefaultValue("Active")
-                    .IsRequired();
-                entity.Property(x => x.Description)
-                    .HasMaxLength(1000);
-                entity.Property(x => x.IsDeleted)
-                    .HasDefaultValue(false);
-                entity.HasIndex(x => x.BranchName)
-                    .IsUnique()
-                    .HasFilter("\"IsDeleted\" = false");
-                entity.HasMany(x => x.Products)
-                    .WithOne(p => p.Branch)
-                    .HasForeignKey(p => p.BranchId)
-                    .OnDelete(DeleteBehavior.SetNull);
-            });
-
-            builder.Entity<Product>(entity =>
-            {
-                entity.ToTable("products");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
-                entity.Property(x => x.Description).HasMaxLength(1000);
-                entity.Property(x => x.SKU).HasMaxLength(50);
-                entity.Property(x => x.Barcode).HasMaxLength(50);
-                entity.Property(x => x.Price).HasPrecision(18, 2);
-                entity.Property(x => x.CostPrice).HasPrecision(18, 2);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-
-                // Category relationship
-                entity.HasOne(x => x.Category)
-                      .WithMany(c => c.Products)
-                      .HasForeignKey(x => x.CategoryId)
-                      .OnDelete(DeleteBehavior.SetNull);
-            });
-
-            builder.Entity<SerialNumber>(entity =>
-            {
-                entity.ToTable("serial_numbers");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.SerialNo).HasMaxLength(100).IsRequired();
-                entity.Property(x => x.Status).HasMaxLength(50);
-                entity.Property(x => x.Notes).HasMaxLength(500);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-
-                // Relationship with Product
-                entity.HasOne(x => x.Product)
-                      .WithMany(p => p.SerialNumbers)
-                      .HasForeignKey(x => x.ProductId)
-                      .OnDelete(DeleteBehavior.Cascade);
-                entity.HasIndex(x => x.SerialNo)
-                      .IsUnique()
-                      .HasDatabaseName("UX_SerialNumber_SerialNo")
-                      .HasFilter("\"IsDeleted\" = false");
-                entity.HasIndex(x => new { x.IsDeleted, x.CreatedDate })
-                      .HasDatabaseName("IX_SerialNumbers_IsDeleted_CreatedDate");
-            });
-
-            builder.Entity<StockMovement>(entity =>
-            {
-                entity.ToTable("stock_movements");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Type).HasMaxLength(50).IsRequired();
-                entity.Property(x => x.Quantity).IsRequired();
-                entity.Property(x => x.Price).HasPrecision(18, 2);
-                entity.Property(x => x.CostPrice).HasPrecision(18, 2);
-                entity.Property(x => x.Notes).HasMaxLength(500);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-                entity.HasIndex(x => new { x.IsDeleted, x.CreatedDate, x.Type })
-                      .HasDatabaseName("IX_StockMovements_IsDeleted_CreatedDate_Type");
-            });
-
-            builder.Entity<Order>(entity =>
-            {
-                entity.ToTable("orders");
-
-                entity.HasKey(x => x.Id);
-
-                entity.Property(x => x.OrderNumber)
-                    .HasMaxLength(50)
-                    .IsRequired();
-
-                entity.HasIndex(x => x.OrderNumber)
-                    .IsUnique();
-                entity.Property(x => x.EarnedPoints).HasDefaultValue(0);
-                entity.Property(x => x.SubTotal).HasPrecision(18, 2);
-                entity.Property(x => x.DiscountAmount).HasPrecision(18, 2);
-                entity.Property(x => x.TaxAmount).HasPrecision(18, 2);
-                entity.Property(x => x.TotalAmount).HasPrecision(18, 2);
-                entity.Property(x => x.CashReceived)
-                    .HasPrecision(18, 2)
-                    .HasDefaultValue(0);
-                entity.Property(x => x.PointsUsed)
-                      .HasDefaultValue(0);
-
-                entity.Property(x => x.Status)
-                    .HasConversion<int>();
-
-                entity.Property(x => x.PaymentStatus)
-                    .HasConversion<int>();
-
-                entity.Property(x => x.SaleType)
-                    .HasConversion<int>();
-
-                entity.HasMany(x => x.OrderItems)
-                    .WithOne(oi => oi.Order)
-                    .HasForeignKey(oi => oi.OrderId)
-                    .OnDelete(DeleteBehavior.Cascade);
-                entity.HasOne(x => x.Staff)
-                    .WithMany()
-                    .HasForeignKey(x => x.StaffId)
-                    .IsRequired(false)
-                    .OnDelete(DeleteBehavior.SetNull);
-
-                entity.HasIndex(x => new { x.IsDeleted, x.OrderDate, x.Status, x.PaymentStatus })
-                      .HasDatabaseName("IX_Orders_Dashboard_Main");
-                entity.HasIndex(x => new { x.IsDeleted, x.StaffId, x.OrderDate })
-                      .HasDatabaseName("IX_Orders_StaffId_Date");
-                entity.HasIndex(x => new { x.IsDeleted, x.CustomerId, x.OrderDate })
-                      .HasDatabaseName("IX_Orders_CustomerId_Date");
-                entity.HasIndex(x => x.OrderNumber)
-                      .IsUnique();
-            });
-
-            builder.Entity<OrderItem>(entity =>
-            {
-                entity.ToTable("order_items");
-                entity.HasKey(x => x.Id);
-                entity.HasOne(oi => oi.SerialNumber)
-                    .WithOne(sn => sn.OrderItem)
-                    .HasForeignKey<OrderItem>(oi => oi.SerialNumberId)
-                    .OnDelete(DeleteBehavior.Restrict);
-            });
-
-            builder.Entity<Discount>(entity =>
-            {
-                entity.ToTable("discounts");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
-                entity.Property(x => x.Description).HasMaxLength(1000);
-                entity.Property(x => x.Type)
-                    .HasMaxLength(20)
-                    .HasDefaultValue("Percentage")
-                    .IsRequired();
-                entity.Property(x => x.Value).HasPrecision(18, 2);
-                entity.Property(x => x.MinOrderAmount).HasPrecision(18, 2);
-                entity.Property(x => x.IsActive).HasDefaultValue(true);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-            });
-
-            builder.Entity<ProductDiscount>(entity =>
-            {
-                entity.ToTable("product_discounts");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.IsDeleted).HasDefaultValue(false);
-                entity.HasIndex(x => new { x.DiscountId, x.ProductId })
-                      .IsUnique()
-                      .HasFilter("\"IsDeleted\" = false");
-                entity.HasOne(x => x.Discount)
-                      .WithMany(d => d.ProductDiscounts)
-                      .HasForeignKey(x => x.DiscountId)
-                      .OnDelete(DeleteBehavior.Cascade);
-                entity.HasOne(x => x.Product)
-                      .WithMany(p => p.ProductDiscounts)
-                      .HasForeignKey(x => x.ProductId)
-                      .OnDelete(DeleteBehavior.Cascade);
-            });
 
             builder.Entity<LeaveType>(entity =>
             {
@@ -405,7 +236,7 @@ namespace POS.Infrastructure.Data
                       .IsUnique()
                       .HasFilter("\"IsDeleted\" = false");
             });
-            
+
             builder.Entity<LeaveRequest>(entity =>
             {
                 entity.ToTable("leave_requests");
@@ -476,7 +307,7 @@ namespace POS.Infrastructure.Data
                       .IsUnique()
                       .HasFilter("\"IsDeleted\" = false");
             });
-            
+
             builder.Entity<PointSetup>(entity =>
             {
                 entity.ToTable("point_setups");
@@ -505,6 +336,232 @@ namespace POS.Infrastructure.Data
                     IsActive = false,
                     CreatedDate = new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 });
+            });
+
+            /// stock management 
+            builder.Entity<Supplier>(entity =>
+            {
+                entity.ToTable("suppliers");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Phone).HasMaxLength(20);
+                entity.Property(x => x.Email).HasMaxLength(200);
+                entity.Property(x => x.Address).HasMaxLength(500);
+            });
+
+            builder.Entity<Product>(entity =>
+            {
+                entity.ToTable("products");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Code).HasMaxLength(50);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Description).HasMaxLength(500);
+                entity.Property(x => x.ImageUrl).HasMaxLength(500);
+                entity.Property(x => x.ProductType).HasConversion<string>();
+                entity.Property(x => x.Unit).HasMaxLength(20);
+                entity.Property(x => x.CostPrice).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.SalePrice).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.LowStockThreshold).HasDefaultValue(0);
+                entity.Property(x => x.StockQuantity).HasDefaultValue(0);
+                entity.HasIndex(x => x.Code)
+                        .IsUnique()
+                        .HasFilter("\"Code\" IS NOT NULL");
+                entity.HasOne(x => x.Category)
+                        .WithMany(c => c.Products)
+                        .HasForeignKey(x => x.CategoryId)
+                        .IsRequired(false)
+                        .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<SerialStock>(entity =>
+            {
+                entity.ToTable("serial_stocks");
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => x.SerialNo).IsUnique();
+                entity.Property(x => x.SerialNo).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Status).HasConversion<string>();
+
+                entity.HasOne(x => x.Product)
+                      .WithMany(x => x.SerialStocks)
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+            });
+
+            builder.Entity<NonSerialStock>(entity =>
+            {
+                entity.ToTable("non_serial_stocks");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Quantity).HasDefaultValue(0);
+                entity.HasOne(x => x.Product)
+                      .WithMany(x => x.NonSerialStocks)
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<StockMovement>(entity =>
+            {
+                entity.ToTable("stock_movements");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Type).HasConversion<string>();
+                entity.Property(x => x.Reference).HasMaxLength(100);
+
+                entity.HasOne(x => x.Product)
+                      .WithMany(x => x.StockMovements)
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Supplier)
+                      .WithMany(x => x.StockMovements)
+                      .HasForeignKey(x => x.SupplierId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+
+            builder.Entity<StockAdjustment>(entity =>
+            {
+                entity.ToTable("stock_adjustments");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Reason).HasConversion<string>();
+
+                entity.HasOne(x => x.Product)
+                      .WithMany(x => x.StockAdjustments)
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<StockReturn>(entity =>
+       {
+           entity.ToTable("stock_returns");
+           entity.HasKey(x => x.Id);
+
+           entity.HasIndex(x => x.ReturnNo).IsUnique();
+           entity.Property(x => x.ReturnNo).HasMaxLength(50).IsRequired();
+
+           entity.Property(x => x.Status)
+                 .HasConversion<string>()
+                 .HasMaxLength(20)
+                 .HasDefaultValue(ReturnStatus.Completed);
+
+           entity.Property(x => x.TotalAmount)
+                 .HasColumnType("decimal(18,2)")
+                 .HasDefaultValue(0m);
+
+           entity.HasOne(x => x.Supplier)
+                 .WithMany()
+                 .HasForeignKey(x => x.SupplierId)
+                 .OnDelete(DeleteBehavior.Restrict);
+       });
+
+            builder.Entity<StockReturnItem>(entity =>
+            {
+                entity.ToTable("stock_return_items");
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Reason).HasConversion<string>();
+
+                entity.Property(x => x.UnitPrice)
+                      .HasColumnType("decimal(18,2)")
+                      .HasDefaultValue(0m);
+
+                entity.Property(x => x.TotalPrice)
+                      .HasColumnType("decimal(18,2)")
+                      .HasDefaultValue(0m);
+
+                entity.Property(x => x.SerialNumbers).HasColumnType("jsonb");
+
+                entity.HasOne(x => x.StockReturn)
+                      .WithMany(x => x.Items)
+                      .HasForeignKey(x => x.StockReturnId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Product)
+                      .WithMany()
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict); 
+            });
+
+
+            builder.Entity<Discount>(entity =>
+            {
+                entity.ToTable("discounts");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Name).HasMaxLength(200).IsRequired();
+                entity.Property(x => x.Description).HasMaxLength(500);
+                entity.Property(x => x.Type).HasMaxLength(20).IsRequired();
+                entity.Property(x => x.Value).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.MinOrderAmount).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.IsActive).HasDefaultValue(true);
+                entity.Property(x => x.IsAllProducts).HasDefaultValue(false);
+            });
+
+            builder.Entity<ProductDiscount>(entity =>
+            {
+                entity.ToTable("product_discounts");
+                entity.HasKey(x => x.Id);
+
+                entity.HasOne(x => x.Product)
+                      .WithMany(p => p.ProductDiscounts)
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Discount)
+                      .WithMany(d => d.ProductDiscounts)
+                      .HasForeignKey(x => x.DiscountId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Add this block inside MyAppDbContext.OnModelCreating, alongside the other
+            // entity configurations (e.g. right after the ProductDiscount block).
+
+            // OnModelCreating
+            builder.Entity<Order>(entity =>
+            {
+                entity.ToTable("orders");
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => x.OrderNo).IsUnique();
+                entity.Property(x => x.OrderNo).HasMaxLength(50).IsRequired();
+                entity.Property(x => x.SubTotal).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.DiscountAmount).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.TotalAmount).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.PointEarned).HasColumnType("decimal(18,4)");
+                entity.Property(x => x.PointUsed).HasColumnType("decimal(18,4)");
+                entity.Property(x => x.Status).HasConversion<string>();
+                entity.Property(x => x.PaymentMethod).HasConversion<string>();
+                entity.Property(x => x.Note).HasMaxLength(500);
+
+                entity.HasOne(x => x.Customer)
+                      .WithMany()
+                      .HasForeignKey(x => x.CustomerId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<OrderItem>(entity =>
+            {
+                entity.ToTable("order_items");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.DiscountAmount).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.LineTotal).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.SerialNumbers).HasColumnType("jsonb");
+
+                entity.HasOne(x => x.Order)
+                      .WithMany(o => o.Items)
+                      .HasForeignKey(x => x.OrderId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Product)
+                      .WithMany()
+                      .HasForeignKey(x => x.ProductId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.Discount)
+                      .WithMany()
+                      .HasForeignKey(x => x.DiscountId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
         }
     }

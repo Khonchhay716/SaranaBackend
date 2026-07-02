@@ -1,25 +1,24 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using POS.Application.Features.Order;
+using POS.API.Extensions;
+using POS.Application.Features.Dashboard;
 
-namespace POS.API.Controllers
+namespace POS.API.Controllers.Dashboard
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/dashboard")]
     public class DashboardController : ControllerBase
     {
         private readonly IMediator _mediator;
-
         public DashboardController(IMediator mediator)
         {
             _mediator = mediator;
         }
 
-        [HttpGet]
-        // [RequirePermission("dashboard:read")]
-        public async Task<ActionResult<DataListInDashboardResponse>> GetDashboard([FromQuery] DataListInDashboardQuery query)
+        [HttpGet("summary")]
+        public async Task<IActionResult> GetSummary([FromQuery] DashboardSummaryQuery query, CancellationToken cancellationToken)
         {
-            var result = await _mediator.Send(query);
+            var result = await _mediator.Send(query, cancellationToken);
             return Ok(result);
         }
     }

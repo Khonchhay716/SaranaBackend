@@ -1,15 +1,9 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace POS.Domain.Enums
 {
-    public enum PaymentMethodCode
+    public enum PaymentMethod
     {
         Cash = 1,
-        BankQR = 2,
-        Point = 3,
+        QRCode = 2,
+        Point = 3
     }
 }

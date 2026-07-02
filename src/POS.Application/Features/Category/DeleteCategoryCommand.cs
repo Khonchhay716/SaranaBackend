@@ -13,10 +13,12 @@ namespace POS.Application.Features.Category
     public class DeleteCategoryCommandHandler : IRequestHandler<DeleteCategoryCommand, ApiResponse>
     {
         private readonly IMyAppDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public DeleteCategoryCommandHandler(IMyAppDbContext context)
+        public DeleteCategoryCommandHandler(IMyAppDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ApiResponse> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
@@ -27,9 +29,13 @@ namespace POS.Application.Features.Category
             if (category == null)
                 return ApiResponse.NotFound($"Category with id {request.Id} not found");
 
+            var hasProducts = await _context.Products.AnyAsync(p => p.CategoryId == request.Id && !p.IsDeleted, cancellationToken);
+            if (hasProducts)
+                return ApiResponse.BadRequest("Cannot delete category that has products");
+
             category.IsDeleted = true;
             category.DeletedDate = DateTimeOffset.UtcNow;
-            category.UpdatedDate = DateTimeOffset.UtcNow;
+            category.DeletedBy = _currentUserService.UserId;
 
             await _context.SaveChangesAsync(cancellationToken);
 

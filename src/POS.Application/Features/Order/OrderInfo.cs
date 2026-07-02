@@ -1,69 +1,80 @@
+// POS.Application/Features/Orders/OrderInfo.cs
 using POS.Application.Common.Typebase;
-using POS.Domain.Enums;
 
-namespace POS.Application.Features.Order
+namespace POS.Application.Features.Orders
 {
-    public class OrderListResponse
+    public class OrderInfo
     {
         public int Id { get; set; }
-        public string OrderNumber { get; set; } = string.Empty;
-        public DateTimeOffset OrderDate { get; set; }
+        public string OrderNo { get; set; } = string.Empty;
         public int? CustomerId { get; set; }
-        public int? StaffId { get; set; }
-        public TypeNamebase? Staff { get; set; }
+        public string CustomerName { get; set; } = "Walk-in Customer";
+        public string Status { get; set; } = string.Empty;
+        public string PaymentMethod { get; set; } = string.Empty;
         public decimal SubTotal { get; set; }
-        public decimal? DiscountAmount { get; set; }
-        public decimal? TaxAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
         public decimal TotalAmount { get; set; }
-        public TypeNamebase? Status { get; set; }
-        public TypeNamebase? SaleType { get; set; }
-        public TypeNamebase? PaymentStatus { get; set; }
-        public TypeNamebase? PaymentMethod { get; set; }
-        public string? Notes { get; set; }
-        public int EarnedPoints { get; set; }
-        public int PointsUsed { get; set; }
-        public decimal CashReceived { get; set; }
-        public List<OrderItemInfo> OrderItems { get; set; } = new();
-    }
-
-    public class OrderCreateResponse
-    {
-        public int Id { get; set; }
-        public string OrderNumber { get; set; } = string.Empty;
-        public DateTimeOffset OrderDate { get; set; }
-        public int? CustomerId { get; set; }
-        public TypeNamebase? Customer { get; set; }
-        public int? StaffId { get; set; }
-        public TypeNamebase? Staff { get; set; }
-        public decimal SubTotal { get; set; }
-        public decimal? DiscountAmount { get; set; }
-        public decimal? TaxAmount { get; set; }
-        public decimal TotalAmount { get; set; }
-        public TypeNamebase? Status { get; set; }
-        public TypeNamebase? SaleType { get; set; }
-        public TypeNamebase? PaymentStatus { get; set; }
-        public TypeNamebase? PaymentMethod { get; set; }
-        public string? Notes { get; set; }
-        public int EarnedPoints { get; set; }
-        public int PointsUsed { get; set; }
-        public decimal CashReceived { get; set; }
-        public List<OrderItemInfo> OrderItems { get; set; } = new();
+        public decimal PointEarned { get; set; }
+        public decimal PointUsed { get; set; }
+        public string? Note { get; set; }
+        public DateTimeOffset CreatedDate { get; set; }
+        public TypeNamebase? CreateBy {get; set;}
+        public List<OrderItemInfo> Items { get; set; } = new();
     }
 
     public class OrderItemInfo
     {
         public int Id { get; set; }
-        public int OrderId { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
-        public string ImageProduct { get; set; } = string.Empty;
-        public int? SerialNumberId { get; set; }
-        public TypeNamebase? SerialNo { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
-        public decimal SubTotal { get; set; }
-        public int? WarrantyMonths { get; set; }
+        public string? ImageUrl { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public string? DiscountName { get; set; }
+        public decimal GlobalDiscountAmount { get; set; }
+        public string? GlobalDiscountName { get; set; }
+        public decimal LineTotal { get; set; }
+        public List<string>? SerialNumbers { get; set; }
+
+        // ✅ Warranty - calculated from start/end dates
+        public int? WarrantyDays { get; set; }
         public DateTimeOffset? WarrantyStartDate { get; set; }
         public DateTimeOffset? WarrantyEndDate { get; set; }
+        public bool HasWarranty => WarrantyDays.HasValue && WarrantyDays.Value > 0;
+        public bool IsWarrantyActive => WarrantyEndDate.HasValue && WarrantyEndDate.Value > DateTimeOffset.UtcNow;
+        public int? RemainingWarrantyDays
+        {
+            get
+            {
+                if (!WarrantyEndDate.HasValue) return null;
+                var remaining = (WarrantyEndDate.Value - DateTimeOffset.UtcNow).Days;
+                return remaining > 0 ? remaining : 0;
+            }
+        }
+        public string WarrantyStatus
+        {
+            get
+            {
+                if (!HasWarranty) return "No Warranty";
+                if (!WarrantyStartDate.HasValue) return "Not Started";
+                if (IsWarrantyActive) return "Active";
+                return "Expired";
+            }
+        }
+    }
+
+    public class OrderSummaryInfo
+    {
+        public int? CustomerId { get; set; }
+        public string CustomerName { get; set; } = "Walk-in Customer";
+        public decimal? CustomerAvailablePoint { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
+        public decimal SubTotal { get; set; }
+        public decimal DiscountAmount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal PointEarned { get; set; }
+        public List<string> Warnings { get; set; } = new();
+        public List<OrderItemInfo> Items { get; set; } = new();
     }
 }

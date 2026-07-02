@@ -11,13 +11,13 @@ namespace POS.Application.Features.Discount
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? EndDate { get; set; }
         public bool IsActive { get; set; }
-        public bool IsGlobal { get; set; }
         public List<DiscountProductItem> Products { get; set; } = new();
         public bool IsDeleted { get; set; }
+        public bool IsAllProducts { get; set; }
         public DateTimeOffset CreatedDate { get; set; }
-        public string? CreatedBy { get; set; }
+        public int? CreatedBy { get; set; }
         public DateTimeOffset? UpdatedDate { get; set; }
-        public string? UpdatedBy { get; set; }
+        public int? UpdatedBy { get; set; }
     }
 
     public class DiscountProductItem
@@ -25,9 +25,9 @@ namespace POS.Application.Features.Discount
         public int ProductDiscountId { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
-        public string? ProductSKU { get; set; }
-        public string? ImageProduct { get; set; }
-        public decimal Price { get; set; }
+        public string? ProductCode { get; set; }
+        public string? ImageUrl { get; set; }
+        public decimal SalePrice { get; set; }
     }
     public class DiscountInfoLookup
     {

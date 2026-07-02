@@ -18,6 +18,7 @@ namespace POS.Application.Features.Discount
         public decimal? MinOrderAmount { get; set; }
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? EndDate { get; set; }
+        public bool IsAllProducts { get; set; } = false;
         public bool IsActive { get; set; } = true;
         public List<int> ProductIds { get; set; } = new();
     }
@@ -77,6 +78,7 @@ namespace POS.Application.Features.Discount
                 StartDate = request.StartDate,
                 EndDate = request.EndDate,
                 IsActive = request.IsActive,
+                IsAllProducts = request.IsAllProducts,
             };
 
             foreach (var productId in request.ProductIds.Distinct())
@@ -113,8 +115,8 @@ namespace POS.Application.Features.Discount
             StartDate = d.StartDate,
             EndDate = d.EndDate,
             IsActive = d.IsActive,
-            IsGlobal = !d.ProductDiscounts.Any(pd => !pd.IsDeleted),
             IsDeleted = d.IsDeleted,
+            IsAllProducts = d.IsAllProducts,
             CreatedDate = d.CreatedDate,
             CreatedBy = d.CreatedBy,
             UpdatedDate = d.UpdatedDate,
@@ -126,9 +128,9 @@ namespace POS.Application.Features.Discount
                     ProductDiscountId = pd.Id,
                     ProductId = pd.ProductId,
                     ProductName = pd.Product?.Name ?? "",
-                    ProductSKU = pd.Product?.SKU,
-                    ImageProduct = pd.Product?.ImageProduct,
-                    Price = pd.Product?.Price ?? 0,
+                    ImageUrl = pd.Product?.ImageUrl,
+                    ProductCode = pd.Product?.Code,
+                    SalePrice = pd.Product?.SalePrice ?? 0,
                 }).ToList(),
         };
     }

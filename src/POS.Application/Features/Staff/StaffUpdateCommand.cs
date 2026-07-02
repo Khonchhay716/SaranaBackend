@@ -64,21 +64,18 @@ namespace POS.Application.Features.Staff
                 return ApiResponse<StaffInfo>.NotFound(
                     $"Staff with ID {request.Id} was not found.");
 
-            // ✅ Prevent self-supervisor
             if (request.SupervisorId.HasValue && request.SupervisorId.Value == request.Id)
                 return ApiResponse<StaffInfo>.BadRequest(
                     "A staff member cannot be their own supervisor.");
 
             if (request.SupervisorId.HasValue)
             {
-                // ✅ Validate supervisor exists
                 var supervisorExists = await _context.Staffs
                     .AnyAsync(s => s.Id == request.SupervisorId.Value && !s.IsDeleted, cancellationToken);
                 if (!supervisorExists)
                     return ApiResponse<StaffInfo>.BadRequest(
                         $"Supervisor with ID {request.SupervisorId.Value} was not found.");
 
-                // ✅ Circular chain detection — inline
                 var visited = new HashSet<int>();
                 var currentId = (int?)request.SupervisorId.Value;
                 var isCircular = false;
@@ -107,7 +104,6 @@ namespace POS.Application.Features.Staff
                         "Circular supervisor chain detected. This assignment would create a loop (e.g., A → B → C → A).");
             }
 
-            // ✅ Validate phone
             var phoneExists = await _context.Staffs
                 .AnyAsync(s => s.PhoneNumber == request.PhoneNumber
                             && s.Id != request.Id

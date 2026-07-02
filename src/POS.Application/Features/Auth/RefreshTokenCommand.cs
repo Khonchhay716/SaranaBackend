@@ -63,7 +63,8 @@ namespace POS.Application.Features.Auth
                 .Distinct().ToList();
 
             // ៥. បង្កើត Access Token និង Refresh Token ថ្មី
-            var newAccessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, permissions);
+            // var newAccessToken = _jwtService.GenerateAccessToken(person.Id, person.Username, permissions);
+            var newAccessToken = _jwtService.GenerateAccessToken(person.Id, person.Username);
             var newRefreshToken = _jwtService.GenerateRefreshToken();
 
             // ៦. បោះបង់ Token ចាស់ រួចបញ្ចូល Token ថ្មីទៅក្នុង Database
@@ -87,7 +88,7 @@ namespace POS.Application.Features.Auth
                 UserId = person.Id,
                 Username = person.Username,
                 Email = person.Email,
-                Permissions = permissions, 
+                Permissions = permissions,
                 Roles = roles
             });
         }
