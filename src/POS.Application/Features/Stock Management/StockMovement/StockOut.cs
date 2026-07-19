@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;
 using POS.Application.Common.Interfaces;
 using POS.Application.Common.Typebase;
+using POS.Domain.Entities;
 using POS.Domain.Entities.StockManagement;
 using POS.Domain.Enums;
+using System.Text.Json;
 
 namespace POS.Application.Features.StockManagement.StockMovements
 {
@@ -16,6 +18,11 @@ namespace POS.Application.Features.StockManagement.StockMovements
         public string? Reference { get; set; }
         public string? Note { get; set; }
         public List<string>? SerialNumbers { get; set; }
+
+        // ✅ Set when this stock-out fulfills a sold order line (staff scanning serials
+        // to hand a product out to the customer). Links the movement back to the order
+        // and records the scanned serials on the OrderItem.
+        public int? OrderItemId { get; set; }
     }
 
     public class StockOutCommandValidator : AbstractValidator<StockOutCommand>
@@ -65,6 +72,25 @@ namespace POS.Application.Features.StockManagement.StockMovements
                 var product = await _context.Products.FirstOrDefaultAsync(x => x.Id == request.ProductId && !x.IsDeleted, cancellationToken);
                 if (product == null) return ApiResponse<StockMovementInfo>.NotFound("Product not found.");
 
+                // ✅ When this stock-out fulfills a sold order line, load and validate the
+                // OrderItem up front so we can record the scanned serials on it below.
+                OrderItem? orderItem = null;
+                if (request.OrderItemId.HasValue)
+                {
+                    orderItem = await _context.OrderItems
+                        .Include(oi => oi.Order)
+                        .FirstOrDefaultAsync(oi => oi.Id == request.OrderItemId.Value, cancellationToken);
+
+                    if (orderItem == null)
+                        return ApiResponse<StockMovementInfo>.NotFound("Order item not found.");
+
+                    if (orderItem.ProductId != request.ProductId)
+                        return ApiResponse<StockMovementInfo>.BadRequest("Product does not match the order item.");
+
+                    if (!string.IsNullOrEmpty(orderItem.SerialNumbers))
+                        return ApiResponse<StockMovementInfo>.BadRequest("This order item has already been handed out.");
+                }
+
                 int actualQuantity;
 
                 if (product.ProductType == ProductType.Serialized)
@@ -87,14 +113,25 @@ namespace POS.Application.Features.StockManagement.StockMovements
                     if (missingSerials.Any())
                         return ApiResponse<StockMovementInfo>.BadRequest($"Serials not found or unavailable: {string.Join(", ", missingSerials)}");
 
+                    if (orderItem != null && serials.Count != orderItem.Quantity)
+                        return ApiResponse<StockMovementInfo>.BadRequest(
+                            $"Scanned serial count does not match ordered quantity. Expected: {orderItem.Quantity}, Scanned: {serials.Count}.");
+
                     foreach (var serial in serials)
                     {
                         serial.Status = SerialStatus.Sold;
                     }
                     actualQuantity = serials.Count;
+
+                    // ✅ Record the confirmed serials on the order line so Order Detail shows them.
+                    if (orderItem != null)
+                        orderItem.SerialNumbers = JsonSerializer.Serialize(serials.Select(s => s.SerialNo).ToList());
                 }
                 else
                 {
+                    if (orderItem != null)
+                        return ApiResponse<StockMovementInfo>.BadRequest("Non-serialized items are fulfilled automatically at sale - no stock-out scan needed.");
+
                     if (!request.Quantity.HasValue || request.Quantity.Value <= 0)
                         return ApiResponse<StockMovementInfo>.BadRequest("Quantity is required.");
 
@@ -121,13 +158,14 @@ namespace POS.Application.Features.StockManagement.StockMovements
                 {
                     ProductId = request.ProductId,
                     SupplierId = null,
+                    OrderItemId = orderItem?.Id,
                     Type = MovementType.Out,
                     Quantity = actualQuantity,
                     QuantityBefore = qtyBefore,
                     QuantityAfter = product.StockQuantity,
                     UnitPrice = product.CostPrice,
                     TotalPrice = product.CostPrice * actualQuantity,
-                    Reference = request.Reference?.Trim(),
+                    Reference = request.Reference?.Trim() ?? orderItem?.Order.OrderNo,
                     Note = request.Note?.Trim(),
                     CreatedBy = _currentUserService.UserId,
                     CreatedDate = DateTimeOffset.UtcNow,

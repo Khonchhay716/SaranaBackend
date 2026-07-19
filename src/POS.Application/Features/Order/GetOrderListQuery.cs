@@ -49,6 +49,12 @@ namespace POS.Application.Features.Orders
         public string? Note { get; set; }
         public DateTimeOffset CreatedDate { get; set; }
         public int? CreateBy { get; set; }
+
+        // ✅ "NotApplicable" = no serialized lines (nothing to scan out).
+        // "Pending" = has serialized lines, none scanned yet.
+        // "Partial" = some serialized lines scanned, some not.
+        // "Completed" = every serialized line has been scanned/handed out.
+        public string StockOutStatus { get; set; } = string.Empty;
     }
 
     public class OrderListQueryHandler : IRequestHandler<OrderListQuery, PaginatedResult<OrderListInfo>>
@@ -112,6 +118,14 @@ namespace POS.Application.Features.Orders
                 Note = o.Note,
                 CreatedDate = o.CreatedDate,
                 CreateBy = o.CreatedBy,
+                StockOutStatus =
+                    !o.Items.Any(i => i.Product.ProductType == ProductType.Serialized)
+                        ? "NotApplicable"
+                        : o.Items.Where(i => i.Product.ProductType == ProductType.Serialized).All(i => i.SerialNumbers != null)
+                            ? "Completed"
+                            : o.Items.Where(i => i.Product.ProductType == ProductType.Serialized).Any(i => i.SerialNumbers != null)
+                                ? "Partial"
+                                : "Pending",
             });
 
             return await projected.ToPaginatedResultAsync(request.Page, request.PageSize);

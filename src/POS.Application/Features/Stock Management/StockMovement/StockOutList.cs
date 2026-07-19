@@ -8,44 +8,38 @@ using POS.Domain.Enums;
 
 namespace POS.Application.Features.StockManagement.StockMovements
 {
-    public class StockMovementListQuery : PaginationRequest, IRequest<PaginatedResult<StockMovementInfo>>
+    // ✅ Dedicated listing for Stock-Out movements only (manual write-offs as well as
+    // order-fulfillment scans). Kept separate from StockMovementListQuery, which now
+    // excludes Type=Out entirely.
+    public class StockOutListQuery : PaginationRequest, IRequest<PaginatedResult<StockMovementInfo>>
     {
         public int? ProductId { get; set; }
-        public int? SupplierId { get; set; }
-        public MovementType? Type { get; set; }
+        public int? OrderItemId { get; set; }
         public DateTimeOffset? From { get; set; }
         public DateTimeOffset? To { get; set; }
     }
 
-    public class StockMovementListQueryHandler : IRequestHandler<StockMovementListQuery, PaginatedResult<StockMovementInfo>>
+    public class StockOutListQueryHandler : IRequestHandler<StockOutListQuery, PaginatedResult<StockMovementInfo>>
     {
         private readonly IMyAppDbContext _context;
-        private readonly ICurrentUserService _currentUserService;
-        public StockMovementListQueryHandler(IMyAppDbContext context, ICurrentUserService currentUserService)
+        public StockOutListQueryHandler(IMyAppDbContext context)
         {
             _context = context;
-            _currentUserService = currentUserService;
         }
 
-        public async Task<PaginatedResult<StockMovementInfo>> Handle(StockMovementListQuery request, CancellationToken cancellationToken)
+        public async Task<PaginatedResult<StockMovementInfo>> Handle(StockOutListQuery request, CancellationToken cancellationToken)
         {
             var query = _context.StockMovements
                 .AsNoTracking()
                 .Include(x => x.Product)
-                .Include(x => x.Supplier)
-                // ✅ Stock-out movements have their own dedicated listing (see StockOutListQuery) -
-                // keep them out of the general movement history.
-                .Where(x => x.Type != MovementType.Out)
+                .Where(x => x.Type == MovementType.Out)
                 .AsQueryable();
 
             if (request.ProductId.HasValue)
                 query = query.Where(x => x.ProductId == request.ProductId.Value);
 
-            if (request.SupplierId.HasValue)
-                query = query.Where(x => x.SupplierId == request.SupplierId.Value);
-
-            if (request.Type.HasValue)
-                query = query.Where(x => x.Type == request.Type.Value);
+            if (request.OrderItemId.HasValue)
+                query = query.Where(x => x.OrderItemId == request.OrderItemId.Value);
 
             if (request.From.HasValue)
                 query = query.Where(x => x.CreatedDate >= request.From.Value);
@@ -65,8 +59,6 @@ namespace POS.Application.Features.StockManagement.StockMovements
                     Id = sm.Id,
                     ProductId = sm.ProductId,
                     ProductName = sm.Product.Name,
-                    SupplierId = sm.SupplierId,
-                    SupplierName = sm.Supplier != null ? sm.Supplier.Name : null,
                     Type = sm.Type.ToString(),
                     TypeAdjustment = string.IsNullOrEmpty(sm.TypeAdjustment.ToString())
                         ? null
@@ -78,6 +70,7 @@ namespace POS.Application.Features.StockManagement.StockMovements
                     TotalPrice = sm.TotalPrice,
                     Reference = sm.Reference,
                     Note = sm.Note,
+                    OrderItemId = sm.OrderItemId,
                     CreatedDate = sm.CreatedDate,
                     CreatedBy = p == null
                         ? null

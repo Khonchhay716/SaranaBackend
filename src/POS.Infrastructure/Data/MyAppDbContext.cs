@@ -416,6 +416,12 @@ namespace POS.Infrastructure.Data
                       .HasForeignKey(x => x.SupplierId)
                       .IsRequired(false)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(x => x.OrderItem)
+                      .WithMany()
+                      .HasForeignKey(x => x.OrderItemId)
+                      .IsRequired(false)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
 

@@ -17,7 +17,6 @@ namespace POS.API.Controllers
         }
 
         [HttpGet("lookup")]
-        // [RequirePermission("leave_type:lookup")]
         public async Task<IActionResult> Lookup(
             [FromQuery] LeaveTypeLookupListQuery query, CancellationToken ct)
             => Ok(await _mediator.Send(query, ct));

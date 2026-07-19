@@ -57,6 +57,16 @@ namespace POS.API.Controllers.StockManagement
             return this.ToActionResult(result);
         }
 
+        [HttpGet("out")]
+        [RequirePermission("stockmovement:read")]
+        public async Task<ActionResult<PaginatedResult<StockMovementInfo>>> GetStockOutList(
+            [FromQuery] StockOutListQuery query,
+            CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
 
         [HttpGet("current")]
         public async Task<ActionResult<PaginatedResult<CurrentStockInfo>>> GetCurrentStock([FromQuery] CurrentStockListQuery query)

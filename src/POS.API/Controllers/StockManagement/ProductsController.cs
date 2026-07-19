@@ -50,6 +50,17 @@ namespace POS.API.Controllers.StockManagement
             return this.ToActionResult(result);
         }
 
+        // ✅ Stock-out scan: staff scans the physical unit's serial number when pulling
+        // a serialized product from stock to hand out to the customer.
+        [HttpGet("Scan-Serial")]
+        public async Task<IActionResult> ScanSerial(
+        [FromQuery] SerialScanQuery query,
+        CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return this.ToActionResult(result);
+        }
+
         [HttpGet("{id}")]
         [RequirePermission("product:view")]
         public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)

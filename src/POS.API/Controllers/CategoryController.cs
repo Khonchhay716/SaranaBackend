@@ -19,7 +19,6 @@ namespace POS.API.Controllers
         }
  
         [HttpGet("lookup")]
-        // [RequirePermission("category:lookup")]
         public async Task<ActionResult<PaginatedResult<CategoryInfoLookup>>> GetCategoriesLookup([FromQuery] CategoryLookupListQuery query)
         {
             var result = await _mediator.Send(query);

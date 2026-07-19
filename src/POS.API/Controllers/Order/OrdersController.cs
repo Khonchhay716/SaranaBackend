@@ -58,5 +58,16 @@ namespace POS.API.Controllers
             var result = await _mediator.Send(query, cancellationToken);
             return this.ToActionResult(result);
         }
+
+        /// <summary>
+        /// Serialized lines of an order that are paid but not yet handed out (no serial assigned yet).
+        /// Staff looks this up by Order No before scanning serials at stock-out.
+        /// </summary>
+        [HttpGet("pending-items")]
+        public async Task<IActionResult> GetPendingItems([FromQuery] OrderPendingItemsQuery query, CancellationToken cancellationToken)
+        {
+            var result = await _mediator.Send(query, cancellationToken);
+            return this.ToActionResult(result);
+        }
     }
 }

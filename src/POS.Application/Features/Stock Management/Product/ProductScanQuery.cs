@@ -36,44 +36,36 @@ namespace POS.Application.Features.StockManagement.Products
         {
             var code = request.Code.Trim();
 
-            // ---- 1) Try match a SERIAL NO first (serialized products) ----
-            var serial = await _context.SerialStocks
-                .AsNoTracking()
-                .Include(s => s.Product)
-                    .ThenInclude(p => p.Category)
-                .FirstOrDefaultAsync(s => s.SerialNo == code && !s.Product.IsDeleted, cancellationToken);
-
-            if (serial != null)
-            {
-                if (serial.Status != SerialStatus.Available)
-                    return ApiResponse<ProductScanInfo>.NotFound($"Serial '{code}' is not available (status: {serial.Status}).");
-
-                var serialResult = MapToScanInfo(serial.Product, isSerial: true, scannedSerial: serial.SerialNo);
-                return ApiResponse<ProductScanInfo>.Ok(serialResult, "Serial number matched.");
-            }
-
-            // ---- 2) Try match a PRODUCT CODE (non-serialized products) ----
+            // ✅ Sale-time scan: always by PRODUCT CODE, for both serialized and non-serialized
+            // products. The individual unit serial is no longer picked here - it's scanned later,
+            // at stock-out time, via SerialScanQuery.
             var product = await _context.Products
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(p => p.Code == code && !p.IsDeleted, cancellationToken);
 
             if (product == null)
-                return ApiResponse<ProductScanInfo>.NotFound($"Product not found with code or serial this '{code}'.");
+                return ApiResponse<ProductScanInfo>.NotFound($"Product not found with code '{code}'.");
 
-            // Code belongs to a serialized product -> must scan the unit's serial, not the product code
+            int availableQty;
             if (product.ProductType == ProductType.Serialized)
-                return ApiResponse<ProductScanInfo>.NotFound($"'{product.Name}' is a serialized product. Please scan the item's serial number instead of the product code.");
-
-            var availableQty = await _context.NonSerialStocks
-                .AsNoTracking()
-                .Where(ns => ns.ProductId == product.Id)
-                .SumAsync(ns => (int?)ns.Quantity, cancellationToken) ?? 0;
+            {
+                availableQty = await _context.SerialStocks
+                    .AsNoTracking()
+                    .CountAsync(s => s.ProductId == product.Id && !s.IsDeleted && s.Status == SerialStatus.Available, cancellationToken);
+            }
+            else
+            {
+                availableQty = await _context.NonSerialStocks
+                    .AsNoTracking()
+                    .Where(ns => ns.ProductId == product.Id)
+                    .SumAsync(ns => (int?)ns.Quantity, cancellationToken) ?? 0;
+            }
 
             if (availableQty <= 0)
                 return ApiResponse<ProductScanInfo>.NotFound($"'{product.Name}' is out of stock.");
 
-            var result = MapToScanInfo(product, isSerial: false, scannedSerial: null, quantityOverride: availableQty);
+            var result = MapToScanInfo(product, isSerial: product.ProductType == ProductType.Serialized, scannedSerial: null, quantityOverride: availableQty);
             return ApiResponse<ProductScanInfo>.Ok(result, "Product matched by code.");
         }
 

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace POS.API.Controllers
 {
     [ApiController]
+    
     [Route("api/[controller]")]
     public class PersonController : ControllerBase
     {
@@ -71,7 +72,6 @@ namespace POS.API.Controllers
         }
 
         [HttpPut("{id}/roles")]
-        // [RequirePermission("user:assign-roles")]
         public async Task<IActionResult> AssignRolesToUser(int id, [FromBody] AssignRolesToUserCommand command)
         {
             command.UserId = id;

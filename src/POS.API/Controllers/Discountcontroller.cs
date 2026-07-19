@@ -1,4 +1,3 @@
-// POS.API/Controllers/DiscountController.cs
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using POS.API.Attributes;

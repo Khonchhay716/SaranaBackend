@@ -16,7 +16,6 @@ namespace POS.Application.Features.Orders
     {
         public int ProductId { get; set; }
         public int Quantity { get; set; }
-        public List<string>? SerialNumbers { get; set; }
 
         // ✅ Warranty - sent from UI when user selects in serial modal
         public DateTimeOffset? WarrantyStartDate { get; set; }
@@ -51,22 +50,11 @@ namespace POS.Application.Features.Orders
             {
                 item.RuleFor(x => x.ProductId).GreaterThan(0).WithMessage("Product is required.");
 
+                // ✅ Quantity drives both serialized and non-serialized lines now - the cashier
+                // scans the product code and enters a quantity; individual serials are no longer
+                // picked at sale time (they're scanned later at stock-out for serialized items).
                 item.RuleFor(x => x.Quantity)
-                    .GreaterThan(0).WithMessage("Quantity must be greater than 0.")
-                    .WhenAsync(async (req, ct) =>
-                    {
-                        var p = await _context.Products.FindAsync(new object[] { req.ProductId }, ct);
-                        return p == null || p.ProductType != ProductType.Serialized;
-                    });
-
-                item.RuleFor(x => x.SerialNumbers)
-                    .NotNull().WithMessage("Serial numbers are required for serialized products.")
-                    .Must(x => x!.Any()).WithMessage("Serial numbers cannot be empty.")
-                    .WhenAsync(async (req, ct) =>
-                    {
-                        var p = await _context.Products.FindAsync(new object[] { req.ProductId }, ct);
-                        return p?.ProductType == ProductType.Serialized;
-                    });
+                    .GreaterThan(0).WithMessage("Quantity must be greater than 0.");
 
                 // ✅ If has warranty end, must have start
                 item.RuleFor(x => x.WarrantyStartDate)
@@ -123,15 +111,11 @@ namespace POS.Application.Features.Orders
                     if (product == null)
                         return ApiResponse<OrderInfo>.BadRequest($"Product ID {item.ProductId} not found.");
 
-                    int quantity = product.ProductType == ProductType.Serialized
-                        ? (item.SerialNumbers?.Count ?? 0)
-                        : item.Quantity;
-
-                    if (quantity <= 0)
+                    if (item.Quantity <= 0)
                         return ApiResponse<OrderInfo>.BadRequest($"Quantity must be greater than 0 for {product.Name}.");
 
                     // ✅ Pass warranty dates from request
-                    productItems.Add((product, quantity, item.SerialNumbers, item.WarrantyStartDate, item.WarrantyEndDate));
+                    productItems.Add((product, item.Quantity, null, item.WarrantyStartDate, item.WarrantyEndDate));
                 }
 
                 var calc = await OrderCalculationService.CalculateAsync(_context, productItems, cancellationToken, now);
@@ -180,26 +164,16 @@ namespace POS.Application.Features.Orders
 
                     if (product.ProductType == ProductType.Serialized)
                     {
-                        var requestedSet = line.SerialNumbers!.Select(s => s.Trim()).ToHashSet();
+                        // ✅ No serial is picked at sale time anymore - staff scans the actual
+                        // unit's serial later, at stock-out, via SerialScanQuery + StockOutCommand.
+                        // Here we only check enough Available stock exists so we don't oversell.
+                        var availableCount = await _context.SerialStocks
+                            .CountAsync(x => x.ProductId == product.Id && !x.IsDeleted && x.Status == SerialStatus.Available, cancellationToken);
 
-                        var serials = await _context.SerialStocks
-                            .Where(x => requestedSet.Contains(x.SerialNo)
-                                && x.ProductId == product.Id
-                                && !x.IsDeleted
-                                && x.Status == SerialStatus.Available)
-                            .ToListAsync(cancellationToken);
+                        if (availableCount < line.Quantity)
+                            return ApiResponse<OrderInfo>.BadRequest($"Insufficient stock for {product.Name}. Available: {availableCount}");
 
-                        var foundSet = serials.Select(s => s.SerialNo).ToHashSet();
-                        var missingSerials = requestedSet.Except(foundSet).ToList();
-
-                        if (missingSerials.Any())
-                            return ApiResponse<OrderInfo>.BadRequest(
-                                $"Serials not found or unavailable for {product.Name}: {string.Join(", ", missingSerials)}");
-
-                        foreach (var serial in serials)
-                            serial.Status = SerialStatus.Sold;
-
-                        actualQuantity = serials.Count;
+                        actualQuantity = line.Quantity;
                     }
                     else
                     {
@@ -211,9 +185,10 @@ namespace POS.Application.Features.Orders
 
                         nonSerial.Quantity -= line.Quantity;
                         actualQuantity = line.Quantity;
-                    }
 
-                    product.StockQuantity -= actualQuantity;
+                        // ✅ Non-serialized stock reduces immediately - no stock-out scan step needed.
+                        product.StockQuantity -= actualQuantity;
+                    }
 
                     order.Items.Add(new OrderItem
                     {
@@ -223,9 +198,8 @@ namespace POS.Application.Features.Orders
                         DiscountAmount = line.SpecificDiscount,
                         LineTotal = line.LineTotal,
                         DiscountId = line.SpecificDiscountApplied?.Id,
-                        SerialNumbers = line.SerialNumbers != null && line.SerialNumbers.Any()
-                            ? JsonSerializer.Serialize(line.SerialNumbers)
-                            : null,
+                        // ✅ Filled in later at stock-out time for serialized products.
+                        SerialNumbers = null,
                         // ✅ Warranty from request (set by user in serial modal)
                         WarrantyStartDate = line.WarrantyStartDate,
                         WarrantyEndDate = line.WarrantyEndDate,

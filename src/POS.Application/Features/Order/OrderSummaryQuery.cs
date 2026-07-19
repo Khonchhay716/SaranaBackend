@@ -13,7 +13,6 @@ namespace POS.Application.Features.Orders
     {
         public int ProductId { get; set; }
         public int Quantity { get; set; }
-        public List<string>? SerialNumbers { get; set; }
 
         // ✅ Warranty from UI
         public DateTimeOffset? WarrantyStartDate { get; set; }
@@ -29,12 +28,8 @@ namespace POS.Application.Features.Orders
 
     public class OrderSummaryQueryValidator : AbstractValidator<OrderSummaryQuery>
     {
-        private readonly IMyAppDbContext _context;
-
-        public OrderSummaryQueryValidator(IMyAppDbContext context)
+        public OrderSummaryQueryValidator()
         {
-            _context = context;
-
             RuleFor(x => x.Items).NotEmpty().WithMessage("Order must have at least one item.");
 
             RuleForEach(x => x.Items).ChildRules(item =>
@@ -42,12 +37,7 @@ namespace POS.Application.Features.Orders
                 item.RuleFor(x => x.ProductId).GreaterThan(0);
 
                 item.RuleFor(x => x.Quantity)
-                    .GreaterThan(0)
-                    .WhenAsync(async (req, ct) =>
-                    {
-                        var p = await _context.Products.FindAsync(new object[] { req.ProductId }, ct);
-                        return p == null || p.ProductType != ProductType.Serialized;
-                    });
+                    .GreaterThan(0);
             });
         }
     }
@@ -73,29 +63,20 @@ namespace POS.Application.Features.Orders
                 if (product == null)
                     return ApiResponse<OrderSummaryInfo>.BadRequest($"Product ID {item.ProductId} not found.");
 
-                int quantity = product.ProductType == ProductType.Serialized
-                    ? (item.SerialNumbers?.Count ?? 0)
-                    : item.Quantity;
+                int quantity = item.Quantity;
 
                 if (quantity <= 0)
                     return ApiResponse<OrderSummaryInfo>.BadRequest($"Quantity must be greater than 0 for {product.Name}.");
 
                 if (product.ProductType == ProductType.Serialized)
                 {
-                    var requestedSet = item.SerialNumbers!.Select(s => s.Trim()).ToHashSet();
+                    // ✅ No serial is picked at sale time - just confirm enough Available stock exists.
+                    var availableCount = await _context.SerialStocks
+                        .CountAsync(x => x.ProductId == product.Id && !x.IsDeleted && x.Status == SerialStatus.Available, cancellationToken);
 
-                    var foundSet = await _context.SerialStocks
-                        .Where(x => requestedSet.Contains(x.SerialNo)
-                            && x.ProductId == product.Id
-                            && !x.IsDeleted
-                            && x.Status == SerialStatus.Available)
-                        .Select(x => x.SerialNo)
-                        .ToListAsync(cancellationToken);
-
-                    var missingSerials = requestedSet.Except(foundSet).ToList();
-                    if (missingSerials.Any())
+                    if (availableCount < quantity)
                         return ApiResponse<OrderSummaryInfo>.BadRequest(
-                            $"Serials not found or unavailable for {product.Name}: {string.Join(", ", missingSerials)}");
+                            $"Insufficient stock for {product.Name}. Available: {availableCount}");
                 }
                 else
                 {
@@ -108,7 +89,7 @@ namespace POS.Application.Features.Orders
                 }
 
                 // ✅ Pass warranty dates from request
-                items.Add((product, quantity, item.SerialNumbers, item.WarrantyStartDate, item.WarrantyEndDate));
+                items.Add((product, quantity, null, item.WarrantyStartDate, item.WarrantyEndDate));
             }
 
             var calc = await OrderCalculationService.CalculateAsync(_context, items, cancellationToken);

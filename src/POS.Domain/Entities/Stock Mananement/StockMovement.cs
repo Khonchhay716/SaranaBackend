@@ -17,7 +17,12 @@ namespace POS.Domain.Entities.StockManagement
         public int ProductId { get; set; }
         public int? SupplierId { get; set; }
 
+        // ✅ Links a stock-out movement back to the order line it fulfills (staff scanning
+        // serials to hand out a sold product). Null for stock-outs unrelated to a sale.
+        public int? OrderItemId { get; set; }
+
         public Product Product { get; set; } = default!;
         public Supplier? Supplier { get; set; }
+        public OrderItem? OrderItem { get; set; }
     }
 }

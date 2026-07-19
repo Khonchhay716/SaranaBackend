@@ -87,6 +87,7 @@ namespace POS.API.Controllers
             var command = new RoleDeleteCommand { Id = id };
             var result = await _mediator.Send(command);
             return this.ToActionResult(result);
+            
         }
     }
 }

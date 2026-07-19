@@ -19,6 +19,7 @@ namespace POS.Application.Features.StockManagement.StockMovements
         public decimal TotalPrice { get; set; }
         public string? Reference { get; set; }
         public string? Note { get; set; }
+        public int? OrderItemId { get; set; }
         public DateTimeOffset CreatedDate { get; set; }
         public TypeNamebase? CreatedBy { get; set; }
     }
