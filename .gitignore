@@ -369,10 +369,6 @@ FodyWeavers.xsd
 ## Project-specific ignores
 ##
 
-## Entity Framework Migrations
-**/Migrations/
-# Uncomment to keep initial migration
-# !**/Migrations/00000000000000_InitialCreate.cs
 
 ## Configuration files with secrets
 appsettings.Development.json

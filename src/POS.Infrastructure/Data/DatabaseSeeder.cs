@@ -37,7 +37,7 @@ namespace POS.Infrastructure.Data
                 Console.WriteLine(" Starting Database Seeding via Hosted Service...");
 
                 // Update Database (Migration) auto
-                // await _context.Database.MigrateAsync(cancellationToken);
+                await _context.Database.MigrateAsync(cancellationToken);
                 await SeedSuperAdminRoleAsync();
                 await SeedUserRoleAsync();
                 await SeedSuperAdminUserAsync();
