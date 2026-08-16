@@ -87,7 +87,7 @@ namespace POS.Application.Features.StockManagement.StockMovements
                     if (orderItem.ProductId != request.ProductId)
                         return ApiResponse<StockMovementInfo>.BadRequest("Product does not match the order item.");
 
-                    if (!string.IsNullOrEmpty(orderItem.SerialNumbers))
+                    if (orderItem.FulfilledDate.HasValue)
                         return ApiResponse<StockMovementInfo>.BadRequest("This order item has already been handed out.");
                 }
 
@@ -129,11 +129,14 @@ namespace POS.Application.Features.StockManagement.StockMovements
                 }
                 else
                 {
-                    if (orderItem != null)
-                        return ApiResponse<StockMovementInfo>.BadRequest("Non-serialized items are fulfilled automatically at sale - no stock-out scan needed.");
-
                     if (!request.Quantity.HasValue || request.Quantity.Value <= 0)
                         return ApiResponse<StockMovementInfo>.BadRequest("Quantity is required.");
+
+                    // ✅ When confirming a sold order line, the quantity must match what was
+                    // ordered (mirrors the serial-count check above for Serialized products).
+                    if (orderItem != null && request.Quantity.Value != orderItem.Quantity)
+                        return ApiResponse<StockMovementInfo>.BadRequest(
+                            $"Quantity does not match ordered quantity. Expected: {orderItem.Quantity}, Given: {request.Quantity.Value}.");
 
                     actualQuantity = request.Quantity.Value;
 
@@ -145,6 +148,11 @@ namespace POS.Application.Features.StockManagement.StockMovements
 
                     nonSerial.Quantity -= actualQuantity;
                 }
+
+                // ✅ Mark the order line as handed out - covers both Serialized (serials
+                // recorded above) and Non-Serialized (quantity confirmed above) lines.
+                if (orderItem != null)
+                    orderItem.FulfilledDate = DateTimeOffset.UtcNow;
 
                 if (product.StockQuantity < actualQuantity)
                     return ApiResponse<StockMovementInfo>.BadRequest($"Insufficient stock. Available: {product.StockQuantity}");

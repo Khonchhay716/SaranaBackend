@@ -177,17 +177,16 @@ namespace POS.Application.Features.Orders
                     }
                     else
                     {
+                        // Same as Serialized: only check enough Available stock exists so we
+                        // don't oversell. Actual deduction happens later at stock-out
+                        // (StockOutCommand), when staff confirms the hand-out.
                         var nonSerial = await _context.NonSerialStocks
                             .FirstOrDefaultAsync(x => x.ProductId == product.Id && !x.IsDeleted, cancellationToken);
 
                         if (nonSerial == null || nonSerial.Quantity < line.Quantity)
                             return ApiResponse<OrderInfo>.BadRequest($"Insufficient stock for {product.Name}. Available: {nonSerial?.Quantity ?? 0}");
 
-                        nonSerial.Quantity -= line.Quantity;
                         actualQuantity = line.Quantity;
-
-                        // ✅ Non-serialized stock reduces immediately - no stock-out scan step needed.
-                        product.StockQuantity -= actualQuantity;
                     }
 
                     order.Items.Add(new OrderItem
@@ -290,6 +289,7 @@ namespace POS.Application.Features.Orders
                 SerialNumbers = !string.IsNullOrEmpty(i.SerialNumbers)
                     ? JsonSerializer.Deserialize<List<string>>(i.SerialNumbers)
                     : null,
+                FulfilledDate = i.FulfilledDate,
                 // ✅ Warranty from OrderItem
                 WarrantyDays = i.WarrantyStartDate.HasValue && i.WarrantyEndDate.HasValue
                     ? (int?)(i.WarrantyEndDate.Value - i.WarrantyStartDate.Value).Days

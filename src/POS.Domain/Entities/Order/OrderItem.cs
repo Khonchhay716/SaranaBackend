@@ -22,5 +22,10 @@ namespace POS.Domain.Entities
         public string? SerialNumbers { get; set; }
         public DateTimeOffset? WarrantyStartDate { get; set; }
         public DateTimeOffset? WarrantyEndDate { get; set; }
+
+        // Set when this line's stock has been confirmed/handed out via StockOutCommand.
+        // Applies to both Serialized and Non-Serialized lines now that both defer stock
+        // deduction until stock-out (previously only Serialized deferred).
+        public DateTimeOffset? FulfilledDate { get; set; }
     }
 }

@@ -50,10 +50,11 @@ namespace POS.Application.Features.Orders
         public DateTimeOffset CreatedDate { get; set; }
         public int? CreateBy { get; set; }
 
-        // ✅ "NotApplicable" = no serialized lines (nothing to scan out).
-        // "Pending" = has serialized lines, none scanned yet.
-        // "Partial" = some serialized lines scanned, some not.
-        // "Completed" = every serialized line has been scanned/handed out.
+        // ✅ "NotApplicable" = order has no lines (nothing to hand out).
+        // "Pending" = no lines confirmed/handed out yet.
+        // "Partial" = some lines confirmed, some not.
+        // "Completed" = every line has been confirmed/handed out (serial scanned or
+        // non-serial stock-out confirmed).
         public string StockOutStatus { get; set; } = string.Empty;
     }
 
@@ -119,11 +120,11 @@ namespace POS.Application.Features.Orders
                 CreatedDate = o.CreatedDate,
                 CreateBy = o.CreatedBy,
                 StockOutStatus =
-                    !o.Items.Any(i => i.Product.ProductType == ProductType.Serialized)
+                    !o.Items.Any()
                         ? "NotApplicable"
-                        : o.Items.Where(i => i.Product.ProductType == ProductType.Serialized).All(i => i.SerialNumbers != null)
+                        : o.Items.All(i => i.FulfilledDate != null)
                             ? "Completed"
-                            : o.Items.Where(i => i.Product.ProductType == ProductType.Serialized).Any(i => i.SerialNumbers != null)
+                            : o.Items.Any(i => i.FulfilledDate != null)
                                 ? "Partial"
                                 : "Pending",
             });

@@ -7,8 +7,9 @@ using POS.Domain.Enums;
 
 namespace POS.Application.Features.Orders
 {
-    // ✅ Lists an order's serialized lines that are paid but not yet handed out
-    // (no serial assigned yet) - staff looks this up by Order No before scanning.
+    // ✅ Lists an order's lines that are paid but not yet handed out/confirmed
+    // (Serialized: no serial assigned yet; Non-Serialized: not yet stock-out confirmed)
+    // - staff looks this up by Order No before scanning/confirming.
     public record OrderPendingItemsQuery : IRequest<ApiResponse<List<PendingOrderItemInfo>>>
     {
         public string OrderNo { get; set; } = default!;
@@ -29,6 +30,10 @@ namespace POS.Application.Features.Orders
         public string ProductCode { get; set; } = default!;
         public string ProductName { get; set; } = default!;
         public int Quantity { get; set; }
+
+        // ✅ Tells the client whether to show the serial-scan UI (true) or a plain
+        // quantity-confirm action (false) when calling StockOutCommand for this line.
+        public bool RequiresSerial { get; set; }
     }
 
     public class OrderPendingItemsQueryHandler : IRequestHandler<OrderPendingItemsQuery, ApiResponse<List<PendingOrderItemInfo>>>
@@ -52,7 +57,7 @@ namespace POS.Application.Features.Orders
                 return ApiResponse<List<PendingOrderItemInfo>>.NotFound($"Order '{orderNo}' not found.");
 
             var pending = order.Items
-                .Where(i => i.Product.ProductType == ProductType.Serialized && string.IsNullOrEmpty(i.SerialNumbers))
+                .Where(i => !i.FulfilledDate.HasValue)
                 .Select(i => new PendingOrderItemInfo
                 {
                     OrderItemId = i.Id,
@@ -60,6 +65,7 @@ namespace POS.Application.Features.Orders
                     ProductCode = i.Product.Code ?? string.Empty,
                     ProductName = i.Product.Name,
                     Quantity = i.Quantity,
+                    RequiresSerial = i.Product.ProductType == ProductType.Serialized,
                 })
                 .ToList();
 

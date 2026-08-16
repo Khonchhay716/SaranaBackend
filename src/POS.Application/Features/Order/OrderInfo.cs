@@ -36,6 +36,7 @@ namespace POS.Application.Features.Orders
         public string? GlobalDiscountName { get; set; }
         public decimal LineTotal { get; set; }
         public List<string>? SerialNumbers { get; set; }
+        public DateTimeOffset? FulfilledDate { get; set; }
 
         // ✅ Warranty - calculated from start/end dates
         public int? WarrantyDays { get; set; }
