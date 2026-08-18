@@ -74,11 +74,11 @@ namespace POS.Application.Features.Permission
 
             // branch 
             // new StaticPermission { Name = "branch:lookup", Description = "Lookup Branch", Category = "Branch" },
-            new StaticPermission { Name = "branch:create", Description = "Create Branch", Category = "Branch" },
-            new StaticPermission { Name = "branch:read", Description = "List Branch", Category = "Branch" },
-            new StaticPermission { Name = "branch:update", Description = "Update Branch", Category = "Branch" },
-            new StaticPermission { Name = "branch:delete", Description = "Delete Branch", Category = "Branch" },
-            new StaticPermission { Name = "branch:view", Description = "View Branch Detail", Category = "Branch" },
+            // new StaticPermission { Name = "branch:create", Description = "Create Branch", Category = "Branch" },
+            // new StaticPermission { Name = "branch:read", Description = "List Branch", Category = "Branch" },
+            // new StaticPermission { Name = "branch:update", Description = "Update Branch", Category = "Branch" },
+            // new StaticPermission { Name = "branch:delete", Description = "Delete Branch", Category = "Branch" },
+            // new StaticPermission { Name = "branch:view", Description = "View Branch Detail", Category = "Branch" },
 
             // customer
             // new StaticPermission { Name = "customer:lookup", Description = "Lookup Customer", Category = "Customer" },
