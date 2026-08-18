@@ -95,11 +95,19 @@ namespace POS.Application.Features.Orders
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
+                var search = request.Search.Trim();
+                // ✅ SerialNumbers is stored as a Postgres jsonb array (e.g. ["SN-001","SN-002"]).
+                // jsonb doesn't support LIKE/Contains directly (causes a 500: "operator does not
+                // exist: jsonb ~~ unknown"), so use the jsonb containment operator (@>) via
+                // EF.Functions.JsonContains for an exact serial match.
+                var serialToken = System.Text.Json.JsonSerializer.Serialize(new[] { search });
+
                 query = query.Where(o =>
-                    o.OrderNo.Contains(request.Search) ||
+                    o.OrderNo.Contains(search) ||
                     (o.Customer != null &&
-                        (o.Customer.FirstName.Contains(request.Search) ||
-                         o.Customer.LastName.Contains(request.Search))));
+                        (o.Customer.FirstName.Contains(search) ||
+                         o.Customer.LastName.Contains(search))) ||
+                    o.Items.Any(i => i.SerialNumbers != null && EF.Functions.JsonContains(i.SerialNumbers, serialToken)));
             }
 
             query = query.OrderByDescending(o => o.CreatedDate);
