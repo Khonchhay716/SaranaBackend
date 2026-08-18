@@ -87,11 +87,14 @@ namespace POS.Application.Features.Orders
             if (request.PaymentMethod.HasValue)
                 query = query.Where(o => o.PaymentMethod == request.PaymentMethod.Value);
 
+            // ✅ Compare against the DateTimeOffset directly - do NOT call .Date on it (strips
+            // the offset, so the boundary drifts by the client's UTC offset depending on the
+            // DB session timezone - see OrderSalesSummaryQuery for the same fix).
             if (request.FromDate.HasValue)
-                query = query.Where(o => o.CreatedDate >= request.FromDate.Value.Date);
+                query = query.Where(o => o.CreatedDate >= request.FromDate.Value);
 
             if (request.ToDate.HasValue)
-                query = query.Where(o => o.CreatedDate < request.ToDate.Value.Date.AddDays(1));
+                query = query.Where(o => o.CreatedDate < request.ToDate.Value.AddDays(1));
 
             if (!string.IsNullOrWhiteSpace(request.Search))
             {

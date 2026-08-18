@@ -51,11 +51,16 @@ namespace POS.Application.Features.Orders
             if (request.StaffId.HasValue && request.StaffId.Value > 0)
                 query = query.Where(o => o.CreatedBy == request.StaffId.Value);
 
+            // ✅ Compare against the DateTimeOffset directly - do NOT call .Date on it.
+            // .Date strips the offset and returns an Unspecified-kind DateTime, whose absolute
+            // instant then depends on the DB session's timezone setting rather than the
+            // offset the client actually sent (e.g. "Today" boundaries drift by the local UTC
+            // offset and can go missing right after local midnight).
             if (request.StartDate.HasValue)
-                query = query.Where(o => o.CreatedDate >= request.StartDate.Value.Date);
+                query = query.Where(o => o.CreatedDate >= request.StartDate.Value);
 
             if (request.EndDate.HasValue)
-                query = query.Where(o => o.CreatedDate < request.EndDate.Value.Date.AddDays(1));
+                query = query.Where(o => o.CreatedDate < request.EndDate.Value.AddDays(1));
 
             var totalSold = await query.SumAsync(o => (decimal?)o.TotalAmount, cancellationToken) ?? 0;
             var totalOrders = await query.CountAsync(cancellationToken);
