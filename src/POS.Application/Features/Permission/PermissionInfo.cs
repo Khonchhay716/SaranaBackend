@@ -56,37 +56,37 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "order:view", Description = "View order detail", Category = "Order" },
 
             // leave request 
-            new StaticPermission { Name = "leave_request:create", Description = "Create My Leave Request", Category = "Leave_Request" },
-            new StaticPermission { Name = "leave_request:read_my", Description = "List My Leave Request", Category = "Leave_Request" },
-            new StaticPermission { Name = "leave_request:read_all", Description = "List All Leave Request", Category = "Leave_Request" },
-            new StaticPermission { Name = "leave_request:view", Description = "View Detail Leave Request", Category = "Leave_Request" },
-            new StaticPermission { Name = "leave_request:approve", Description = "Approve Leave Request", Category = "Leave_Request" },
-            new StaticPermission { Name = "leave_request:reject", Description = "Reject Leave Request", Category = "Leave_Request" },
-            new StaticPermission { Name = "leave_request:cancel", Description = "Cancel Leave Request", Category = "Leave_Request" },
+            new StaticPermission { Name = "leave_request:create", Description = "Create My Leave Request", Category = "Leave Request" },
+            new StaticPermission { Name = "leave_request:read_my", Description = "List My Leave Request", Category = "Leave Request" },
+            new StaticPermission { Name = "leave_request:read_all", Description = "List All Leave Request", Category = "Leave Request" },
+            new StaticPermission { Name = "leave_request:view", Description = "View Detail Leave Request", Category = "Leave Request" },
+            new StaticPermission { Name = "leave_request:approve", Description = "Approve Leave Request", Category = "Leave Request" },
+            new StaticPermission { Name = "leave_request:reject", Description = "Reject Leave Request", Category = "Leave Request" },
+            new StaticPermission { Name = "leave_request:cancel", Description = "Cancel Leave Request", Category = "Leave Request" },
 
             // leave type 
             // new StaticPermission { Name = "leave_type:lookup", Description = "Lookup Leave Type", Category = "Leave_Type" },
-            new StaticPermission { Name = "leave_type:create", Description = "Create Leave Type", Category = "Leave_Type" },
-            new StaticPermission { Name = "leave_type:read", Description = "List Leave Type", Category = "Leave_Type" },
-            new StaticPermission { Name = "leave_type:update", Description = "Update Leave Type", Category = "Leave_Type" },
-            new StaticPermission { Name = "leave_type:delete", Description = "Delete Leave Type", Category = "Leave_Type" },
-            new StaticPermission { Name = "leave_type:view", Description = "View Leave Type Detail", Category = "Leave_Type" },
+            new StaticPermission { Name = "leave_type:create", Description = "Create Leave Type", Category = "Leave Type" },
+            new StaticPermission { Name = "leave_type:read", Description = "List Leave Type", Category = "Leave Type" },
+            new StaticPermission { Name = "leave_type:update", Description = "Update Leave Type", Category = "Leave Type" },
+            new StaticPermission { Name = "leave_type:delete", Description = "Delete Leave Type", Category = "Leave Type" },
+            new StaticPermission { Name = "leave_type:view", Description = "View Leave Type Detail", Category = "Leave Type" },
 
             // branch 
             // new StaticPermission { Name = "branch:lookup", Description = "Lookup Branch", Category = "Branch" },
-            // new StaticPermission { Name = "branch:create", Description = "Create Branch", Category = "Branch" },
-            // new StaticPermission { Name = "branch:read", Description = "List Branch", Category = "Branch" },
-            // new StaticPermission { Name = "branch:update", Description = "Update Branch", Category = "Branch" },
-            // new StaticPermission { Name = "branch:delete", Description = "Delete Branch", Category = "Branch" },
-            // new StaticPermission { Name = "branch:view", Description = "View Branch Detail", Category = "Branch" },
+            new StaticPermission { Name = "branch:create", Description = "Create Branch", Category = "Branch" },
+            new StaticPermission { Name = "branch:read", Description = "List Branch", Category = "Branch" },
+            new StaticPermission { Name = "branch:update", Description = "Update Branch", Category = "Branch" },
+            new StaticPermission { Name = "branch:delete", Description = "Delete Branch", Category = "Branch" },
+            new StaticPermission { Name = "branch:view", Description = "View Branch Detail", Category = "Branch" },
 
             // customer
             // new StaticPermission { Name = "customer:lookup", Description = "Lookup Customer", Category = "Customer" },
-            new StaticPermission { Name = "customer:create", Description = "Create Customer", Category = "Customer" },
-            new StaticPermission { Name = "customer:read", Description = "List Customer", Category = "Customer" },
-            new StaticPermission { Name = "customer:update", Description = "Update Customer", Category = "Customer" },
-            new StaticPermission { Name = "customer:delete", Description = "Delete Customer", Category = "Customer" },
-            new StaticPermission { Name = "customer:view", Description = "View Customer Detail", Category = "Customer" },
+            new StaticPermission { Name = "customer:create", Description = "Create Member", Category = "Member" },
+            new StaticPermission { Name = "customer:read", Description = "List Member", Category = "Member" },
+            new StaticPermission { Name = "customer:update", Description = "Update Member", Category = "Member" },
+            new StaticPermission { Name = "customer:delete", Description = "Delete Member", Category = "Member" },
+            new StaticPermission { Name = "customer:view", Description = "View Member Detail", Category = "Member" },
 
             // staff
             // new StaticPermission { Name = "staff:lookup", Description = "Lookup Staff", Category = "Staff" },
@@ -105,8 +105,8 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "discount:view", Description = "View Discount Detail", Category = "Discount" },
 
             // point setting
-            new StaticPermission { Name = "point_setting:view", Description = "View Point Setting", Category = "Point_Setting" },
-            new StaticPermission { Name = "point_setting:update", Description = "Update Point Setting", Category = "Point_Setting" },
+            new StaticPermission { Name = "point_setting:view", Description = "View Point Setting", Category = "Point Setting" },
+            new StaticPermission { Name = "point_setting:update", Description = "Update Point Setting", Category = "Point Setting" },
 
             new StaticPermission { Name = "supplier:create", Description = "Create Supplier", Category = "Supplier" },
             new StaticPermission { Name = "supplier:read", Description = "List Supplier", Category = "Supplier" },
@@ -118,14 +118,14 @@ namespace POS.Application.Features.Permission
             new StaticPermission { Name = "adjustment:read", Description = "List Adjustment", Category = "Adjustment" },
             new StaticPermission { Name = "adjustment:view", Description = "View Adjustment Detail", Category = "Adjustment" },
 
-            new StaticPermission { Name = "stockmovement:create", Description = "Create StockMovement", Category = "StockMovement" },
-            new StaticPermission { Name = "stockmovement:read", Description = "List StockMovement", Category = "StockMovement" },
-            new StaticPermission { Name = "stockmovement:view", Description = "View StockMovement Detail", Category = "StockMovement" },
+            new StaticPermission { Name = "stockmovement:create", Description = "Create StockMovement", Category = "Stock Movement" },
+            new StaticPermission { Name = "stockmovement:read", Description = "List StockMovement", Category = "Stock Movement" },
+            new StaticPermission { Name = "stockmovement:view", Description = "View StockMovement Detail", Category = "Stock Movement" },
 
-            new StaticPermission { Name = "stockreturn:create", Description = "Create StockReturn", Category = "StockReturn" },
-            new StaticPermission { Name = "stockreturn:read", Description = "List StockReturn", Category = "StockReturn" },
-            new StaticPermission { Name = "stockreturn:view", Description = "View StockReturn Detail", Category = "StockReturn" },
-            new StaticPermission { Name = "stockreturn:cancel", Description = "Cancel StockReturn", Category = "StockReturn" },
+            new StaticPermission { Name = "stockreturn:create", Description = "Create StockReturn", Category = "Stock Return" },
+            new StaticPermission { Name = "stockreturn:read", Description = "List StockReturn", Category = "Stock Return" },
+            new StaticPermission { Name = "stockreturn:view", Description = "View StockReturn Detail", Category = "Stock Return" },
+            new StaticPermission { Name = "stockreturn:cancel", Description = "Cancel StockReturn", Category = "Stock Return" },
         };
     }
 }
