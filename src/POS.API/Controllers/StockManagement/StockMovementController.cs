@@ -38,7 +38,7 @@ namespace POS.API.Controllers.StockManagement
         }
 
         [HttpPost("in")]
-        [RequirePermission("stockmovement:create")]
+        // [RequirePermission("stockmovement:create")]
         public async Task<IActionResult> StockIn(
             [FromBody] StockInCommand command,
             CancellationToken cancellationToken)
@@ -48,7 +48,7 @@ namespace POS.API.Controllers.StockManagement
         }
 
         [HttpPost("out")]
-        [RequirePermission("stockmovement:create")]
+        // [RequirePermission("stockmovement:create")]
         public async Task<IActionResult> StockOut(
             [FromBody] StockOutCommand command,
             CancellationToken cancellationToken)
