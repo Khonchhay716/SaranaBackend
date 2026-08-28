@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using POS.Application.Common.Dto;
 using POS.Application.Common.Interfaces;
+using POS.Application.Common.Typebase;
 using POS.Domain.Entities;
 using POS.Domain.Entities.StockManagement;
 using POS.Domain.Enums;
@@ -252,7 +253,17 @@ namespace POS.Application.Features.Orders
                     .Include(o => o.Items).ThenInclude(i => i.Discount)
                     .FirstOrDefaultAsync(o => o.Id == order.Id, cancellationToken);
 
-                return ApiResponse<OrderInfo>.Created(MapToInfo(result!), "Order created successfully.");
+                var info = MapToInfo(result!);
+
+                if (result!.CreatedBy.HasValue)
+                {
+                    info.CreateBy = await _context.Persons
+                        .Where(u => u.Id == result.CreatedBy.Value)
+                        .Select(u => new TypeNamebase { Id = u.Id, Name = u.Username })
+                        .FirstOrDefaultAsync(cancellationToken);
+                }
+
+                return ApiResponse<OrderInfo>.Created(info, "Order created successfully.");
             }
             catch
             {
@@ -260,6 +271,8 @@ namespace POS.Application.Features.Orders
                 throw;
             }
         }
+
+        
 
         internal static OrderInfo MapToInfo(Order o) => new()
         {

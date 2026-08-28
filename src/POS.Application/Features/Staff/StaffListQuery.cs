@@ -43,6 +43,8 @@ namespace POS.Application.Features.Staff
             var query = _context.Staffs
                 .AsNoTracking()
                 .Include(s => s.Person)
+                    .ThenInclude(p => p!.PersonRoles)
+                        .ThenInclude(pr => pr.Role)
                 .Include(s => s.Supervisor)
                 .Where(s => !s.IsDeleted);
 
@@ -96,7 +98,15 @@ namespace POS.Application.Features.Staff
                         Id = s.Person.Id,
                         Username = s.Person.Username,
                         Email = s.Person.Email,
-                        IsActive = s.Person.IsActive
+                        IsActive = s.Person.IsActive,
+                        Roles = s.Person.PersonRoles
+                            .Where(pr => !pr.Role.IsDeleted)
+                            .Select(pr => new RoleBasicInfo
+                            {
+                                Id = pr.Role.Id,
+                                Name = pr.Role.Name,
+                                Description = pr.Role.Description
+                            }).ToList()
                     }
                     : null
             });
